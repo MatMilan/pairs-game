@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пары чисел</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-layout">
+        <!-- ============ ЛЕВАЯ КОЛОНКА ============ -->
+        <aside class="sidebar sidebar-left">
+            <div class="stat-panel">
+                <div class="stat-row">
+                    <span class="stat-icon">⏱️</span>
+                    <div class="stat-info">
+                        <span class="stat-label">Время</span>
+                        <span class="stat-value" id="timer">00:00</span>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">🎯</span>
+                    <div class="stat-info">
+                        <span class="stat-label">Пар убрано</span>
+                        <span class="stat-value" id="pairs-counter">0</span>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">💡</span>
+                    <div class="stat-info">
+                        <span class="stat-label">Подсказки</span>
+                        <div class="hints-indicator" id="hints-indicator">
+                            <span class="hint-lamp active"></span>
+                            <span class="hint-lamp active"></span>
+                            <span class="hint-lamp active"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">🔥</span>
+                    <div class="stat-info">
+                        <span class="stat-label">Комбо 3/3</span>
+                        <div class="combo-bar" id="combo-bar">
+                            <span class="combo-seg"></span>
+                            <span class="combo-seg"></span>
+                            <span class="combo-seg"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">🔊</span>
+                    <div class="stat-info">
+                        <span class="stat-label">Звук</span>
+                        <button class="btn-sound" id="btn-sound" title="Вкл/выкл звук">🔔</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-panel">
+                <div class="status-bar" id="status">Нажмите «Старт» для начала</div>
+            </div>
+
+            <div class="controls-panel">
+                <button id="btn-start" class="btn btn-primary" title="Space">▶️ Старт</button>
+                <button id="btn-pause" class="btn btn-secondary" title="Space">⏸️ Пауза</button>
+                <button id="btn-redraw" class="btn btn-secondary" title="R">🔄 Переписать</button>
+                <button id="btn-undo" class="btn btn-secondary" title="Z">↩️ Отмена</button>
+                <button id="btn-hint" class="btn btn-secondary" title="H">💡 Подсказка</button>
+            </div>
+
+        </aside>
+
+        <!-- ============ ЦЕНТР ============ -->
+        <main class="main-column">
+            <h1 class="game-title">✨ Пары чисел ✨</h1>
+            <div class="board-wrapper" id="board-wrapper">
+                <table id="game-board"></table>
+                <div class="pause-overlay" id="pause-overlay">
+                    <div class="pause-content">⏸️<span>Пауза</span></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- ============ ПРАВАЯ КОЛОНКА ============ -->
+        <aside class="sidebar sidebar-right">
+            <div class="theme-panel">
+                <span class="stat-label panel-label">Тема</span>
+                <div class="theme-options" id="theme-options">
+                    <button class="theme-btn" data-theme="cosmos" title="Космос"></button>
+                    <button class="theme-btn" data-theme="light" title="Светлая"></button>
+                    <button class="theme-btn" data-theme="neon" title="Неон"></button>
+                    <button class="theme-btn" data-theme="ocean" title="Океан"></button>
+                </div>
+            </div>
+
+            <details class="help-details">
+                <summary class="help-summary">ℹ️ Как играть</summary>
+                <div class="help-body">
+                    <p><b>Цель:</b> убрать все цифры с поля.</p>
+                    <p><b>Пара:</b> две одинаковые цифры (3–3) или две цифры с суммой 10 (3–7).</p>
+                    <p><b>Условие:</b> между цифрами пары не должно быть других цифр — по строке, столбцу или через край соседних строк.</p>
+                    <p><b>Бонус:</b> 3 пары одного цвета подряд → +1 подсказка.</p>
+                    <p><b>Режимы:</b> Classic; Easy; Medium; Hard.</p>
+                    <p><b>Клавиши:</b> Space — старт/пауза, Z — отмена, H — подсказка, R — сдвиг.</p>
+                </div>
+            </details>
+
+            <div class="difficulty-panel">
+                <span class="stat-label panel-label">Сложность</span>
+                <select id="difficulty-select" class="difficulty-select">
+                    <option value="classic">Classic</option>
+                    <option value="level1">Easy</option>
+                    <option value="level2">Medium</option>
+                    <option value="level3">Hard</option>
+                </select>
+            </div>
+            <div class="rating-card">
+                <div class="rating-head">
+                    <h2 class="rating-title">🌍 Онлайн-рейтинг</h2>
+                    <button id="btn-rating-refresh" class="rating-refresh" title="Обновить">🔄</button>
+                </div>
+
+                <div class="rating-tabs" id="rating-tabs">
+                    <button data-mode="classic" class="rating-tab active">Classic</button>
+                    <button data-mode="level1" class="rating-tab">Easy</button>
+                    <button data-mode="level2" class="rating-tab">Medium</button>
+                    <button data-mode="level3" class="rating-tab">Hard</button>
+                </div>
+
+                <div class="rating-kinds" id="rating-kinds">
+                    <button data-kind="time" class="rating-kind active">⏱️ Время</button>
+                    <button data-kind="pairs" class="rating-kind">🎯 Пары</button>
+                </div>
+
+                <ol class="records-list rating-list" id="rating-list"></ol>
+
+                <div class="rating-status" id="rating-status"></div>
+
+                <div class="rating-player">
+                    <label class="stat-label" for="player-name">Ваше имя</label>
+                    <input id="player-name" class="rating-input" type="text"
+                           maxlength="24" placeholder="Как вас записать?" autocomplete="nickname">
+                    <button id="btn-rating-send" class="btn btn-primary rating-send" disabled>
+                        📤 Отправить результат
+                    </button>
+                </div>
+
+                <p class="rating-hint">
+                    Имя запоминается. После победы результат отправляется автоматически.
+                </p>
+            </div>
+            <div class="records-card">
+                <h2 class="records-title" id="records-title">🏆 Рекорды</h2>
+                <div class="records-scroll">
+                    <div class="records-block">
+                        <h3 class="records-heading">⏱️ Лучшее время</h3>
+                        <ol class="records-list" id="records-time"></ol>
+                    </div>
+                    <div class="records-block">
+                        <h3 class="records-heading">🎯 Убрано пар</h3>
+                        <ol class="records-list" id="records-pairs"></ol>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script src="rating.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
