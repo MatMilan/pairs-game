@@ -3,7 +3,7 @@
    ============================================================ */
 (function () {
     const CONFIG = {
-        url: 'https://fkxvyebvfajkrnpqcoaq.supabase.co/rest/v1/',      // https://XXXXXXXX.supabase.co
+        url: 'https://fkxvyebvfajkrnpqcoaq.supabase.co',      // https://XXXXXXXX.supabase.co
         key: 'sb_publishable_8F__rJmJ3VdpvhSX9AB0hA_Pjtg7H1z',      // anon public key (НЕ service_role!)
         table: 'pairs_scores',
         topLimit: 50, // показываем топ-50 (больше требуемых 20)
