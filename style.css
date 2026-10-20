@@ -701,3 +701,26 @@ body {
     line-height: 1.5;
     color: var(--text-dim);
 }
+
+/* ===== Кнопка Google и статус авторизации ===== */
+.btn-google {
+    width: 100%;
+    padding: 11px 10px;
+    font-size: 0.85rem;
+    background: linear-gradient(135deg, #4285F4, #34A853);
+    border: none;
+}
+.btn-google:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(66, 133, 244, 0.4);
+}
+.auth-status {
+    font-size: 0.75rem;
+    color: var(--text-main);
+    min-height: 16px;
+    text-align: center;
+    word-break: break-word;
+}
+
+/* Список на 20 записей — чуть выше */
+.rating-list { max-height: 420px; }
