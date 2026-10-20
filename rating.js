@@ -1,31 +1,36 @@
 /* ============================================================
-   Онлайн-рейтинг · Supabase REST API
+   Онлайн-рейтинг + Google Auth + Античит (топ-20)
    ============================================================ */
 (function () {
     const CONFIG = {
-        url: 'https://fkxvyebvfajkrnpqcoaq.supabase.co',      // https://XXXXXXXX.supabase.co
-        key: 'sb_publishable_8F__rJmJ3VdpvhSX9AB0hA_Pjtg7H1z',      // anon public key (НЕ service_role!)
+        url: 'https://fkxvyebvfajkrnpqcoaq.supabase.co',          // https://ВАШ-PROJECT-REF.supabase.co
+        key: 'sb_publishable_8F__rJmJ3VdpvhSX9AB0hA_Pjtg7H1z',          // anon public key
+        functionUrl: 'https://fkxvyebvfajkrnpqcoaq.supabase.co/functions/v1/validate-game',  // https://ВАШ-PROJECT-REF.supabase.co/functions/v1/validate-game
         table: 'pairs_scores',
-        topLimit: 50, // показываем топ-50 (больше требуемых 20)
+        topLimit: 50,     // топ-50
         nameKey: 'pairsGamePlayer',
     };
 
-    const enabled = Boolean(CONFIG.url && CONFIG.key);
+    const enabled = Boolean(CONFIG.url && CONFIG.key && CONFIG.functionUrl);
     const $ = (id) => document.getElementById(id);
 
     let mode = 'classic';
     let kind = 'time';
-    let ticket = 0;   // защита от устаревших ответов при быстром переключении табов
+    let ticket = 0;
+    let currentUser = null;
+    let supabaseClient = null;
+
+    if (window.supabase && CONFIG.url && CONFIG.key) {
+        supabaseClient = window.supabase.createClient(CONFIG.url, CONFIG.key);
+    }
 
     function getPlayer() {
         try { return (localStorage.getItem(CONFIG.nameKey) || '').trim(); }
         catch { return ''; }
     }
-
     function setPlayer(name) {
         try { localStorage.setItem(CONFIG.nameKey, name); } catch {}
     }
-
     function setStatus(text, isError = false) {
         const el = $('rating-status');
         if (!el) return;
@@ -36,7 +41,6 @@
     async function request(path, options = {}) {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 10000);
-
         try {
             const res = await fetch(CONFIG.url + '/rest/v1/' + path, {
                 ...options,
@@ -48,7 +52,6 @@
                     ...(options.headers || {}),
                 },
             });
-
             const text = await res.text();
             if (!res.ok) {
                 let detail = text;
@@ -75,22 +78,23 @@
         return request(CONFIG.table + '?' + params.toString());
     }
 
-    async function submitRun(m, seconds, pairs, name) {
-        const player = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 24);
-        if (!player) throw new Error('введите имя');
-        if (!Number.isInteger(seconds) || seconds < 1 || seconds > 7200)
-            throw new Error('некорректное время');
-        if (!Number.isInteger(pairs) || pairs < 1 || pairs > 300)
-            throw new Error('некорректное число пар');
+    // Отправка через Edge Function (античит)
+    async function submitRun(payload) {
+        if (!supabaseClient) throw new Error('Supabase не инициализирован');
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) throw new Error('войдите через Google');
 
-        return request(CONFIG.table, {
+        const res = await fetch(CONFIG.functionUrl, {
             method: 'POST',
-            headers: { Prefer: 'return=representation' },
-            body: JSON.stringify([
-                { player, mode: m, kind: 'time',  value: seconds },
-                { player, mode: m, kind: 'pairs', value: pairs },
-            ]),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + session.access_token,
+            },
+            body: JSON.stringify(payload),
         });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'валидация не пройдена');
+        return data;
     }
 
     function paintTabs() {
@@ -104,7 +108,6 @@
         const list = $('rating-list');
         if (!list) return;
         list.innerHTML = '';
-
         const me = getPlayer().toLowerCase();
 
         if (!rows.length) {
@@ -124,7 +127,7 @@
 
             const name = document.createElement('span');
             name.className = 'rating-name';
-            name.textContent = r.player;   // textContent — никакой инъекции HTML
+            name.textContent = r.player;
             name.title = r.player;
 
             const date = document.createElement('span');
@@ -160,14 +163,13 @@
 
         const myTicket = ++ticket;
         if (!silent) setStatus('Загрузка…');
-
         try {
             const rows = await getTop(mode, kind);
             if (myTicket !== ticket) return;
             render(rows);
             if (!silent) {
-                const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                setStatus(`Топ-${rows.length} · обновлено в ${time}`);
+                const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                setStatus(`Топ-${rows.length} · обновлено в ${t}`);
             }
         } catch (e) {
             if (myTicket !== ticket) return;
@@ -183,33 +185,80 @@
         return refresh(silent);
     }
 
+    // ===== Google Auth =====
+    async function signInWithGoogle() {
+        if (!supabaseClient) return setStatus('Supabase не инициализирован', true);
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin },
+        });
+        if (error) setStatus('Ошибка входа: ' + error.message, true);
+    }
+
+    async function signOut() {
+        if (!supabaseClient) return;
+        await supabaseClient.auth.signOut();
+    }
+
+    function updateAuthUI(user) {
+        const btn = $('btn-google-auth');
+        const statusEl = $('auth-status');
+        if (!btn) return;
+
+        if (user) {
+            currentUser = user;
+            const name = user.user_metadata?.full_name || user.email || '';
+            btn.textContent = '🚪 Выйти';
+            btn.onclick = signOut;
+            if (statusEl) statusEl.textContent = '👤 ' + name;
+            if (name) {
+                setPlayer(name);
+                const input = $('player-name');
+                if (input) input.value = name;
+            }
+        } else {
+            currentUser = null;
+            btn.textContent = '🔐 Войти через Google';
+            btn.onclick = signInWithGoogle;
+            if (statusEl) statusEl.textContent = '';
+        }
+    }
+
+    async function checkAuth() {
+        if (!supabaseClient) return;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        updateAuthUI(session?.user || null);
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+            updateAuthUI(session?.user || null);
+        });
+    }
+
     function init() {
         const input = $('player-name');
         if (input) {
             input.value = getPlayer();
             input.addEventListener('input', () => setPlayer(input.value.trim()));
         }
-
         document.querySelectorAll('#rating-tabs button').forEach(b =>
             b.addEventListener('click', () => setMode(b.dataset.mode)));
-
         document.querySelectorAll('#rating-kinds button').forEach(b =>
             b.addEventListener('click', () => {
                 kind = b.dataset.kind;
                 paintTabs();
                 refresh();
             }));
-
         const btn = $('btn-rating-refresh');
         if (btn) btn.addEventListener('click', () => refresh());
 
         paintTabs();
         if (!enabled) setStatus('Рейтинг не подключён: заполните CONFIG', true);
+        checkAuth();
     }
 
     window.Rating = {
         enabled, getPlayer, setPlayer, setStatus,
         submitRun, getTop, refresh, setMode,
+        signInWithGoogle, signOut, checkAuth,
     };
 
     init();
