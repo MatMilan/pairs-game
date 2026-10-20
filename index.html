@@ -137,6 +137,8 @@
                 <div class="rating-status" id="rating-status"></div>
 
                 <div class="rating-player">
+                    <button id="btn-google-auth" class="btn btn-google">🔐 Войти через Google</button>
+                    <div id="auth-status" class="auth-status"></div>
                     <label class="stat-label" for="player-name">Ваше имя</label>
                     <input id="player-name" class="rating-input" type="text"
                            maxlength="24" placeholder="Как вас записать?" autocomplete="nickname">
@@ -165,6 +167,7 @@
         </aside>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="rating.js"></script>
     <script src="script.js"></script>
 </body>
