@@ -11,6 +11,30 @@ let isPaused = false;
 let pendingRun = null; // победная партия, готовая к отправке в рейтинг
 let gameSeed = 0;
 let gameMoves = [];
+let dailyAlreadyPlayed = false;
+
+async function checkDailyStatus() {
+    if (activeMode !== 'daily') {
+        dailyAlreadyPlayed = false;
+        return;
+    }
+
+    if (!window.Rating || !window.Rating.enabled) return;
+
+    try {
+        const today = getTodayString();
+        const result = await window.Rating.checkDailyPlayed(today);
+        dailyAlreadyPlayed = result;
+
+        if (dailyAlreadyPlayed) {
+            updateStatus('🏆 Вы уже победили в Daily сегодня — играйте для тренировки!');
+        } else {
+            updateStatus('Daily Challenge — одна победа в день на аккаунт');
+        }
+    } catch (e) {
+        console.warn('Не удалось проверить статус Daily:', e);
+    }
+}
 
 // Детерменированный генератор сида
 function mulberry32(seed) {
@@ -43,7 +67,16 @@ function getTodayString() {
 }
 
 function getDailySeed(dateString) {
-    return hashString(dateString + DAILY_SECRET);
+    // Простой хеш: сумма кодов символов
+    let seed = 0;
+    for (let i = 0; i < dateString.length; i++) {
+        seed = (seed * 31 + dateString.charCodeAt(i)) & 0x7FFFFFFF;
+    }
+    // Добавляем секрет для уникальности
+    for (let i = 0; i < DAILY_SECRET.length; i++) {
+        seed = (seed * 31 + DAILY_SECRET.charCodeAt(i)) & 0x7FFFFFFF;
+    }
+    return seed;
 }
 // ===== Уровни сложности =====
 const LEVEL_CONFIG = {
@@ -276,6 +309,7 @@ function startGame() {
     gameMoves = [];
 
     fillStartRows();
+    checkDailyStatus();
     startTimer();
     updateStatus('Игра началась! Режим: ' + LEVEL_CONFIG[activeMode].label);
 }
@@ -886,6 +920,11 @@ function queueOnlineResult(seconds) {
 }
 
 async function sendOnlineResult() {
+    if (pendingRun.mode === 'daily' && dailyAlreadyPlayed) {
+        status('Вы уже победили в Daily сегодня — результат не отправляется');
+        if (btn) btn.disabled = false;
+        return;
+    }
     if (!pendingRun || pendingRun.sent) return;
     if (!window.Rating || !window.Rating.enabled) return;
 
@@ -936,6 +975,8 @@ document.addEventListener('keydown', (e) => {
 // ===== Выбор сложности =====
 difficultySelect.addEventListener('change', () => {
     currentMode = difficultySelect.value;
+    activeMode = currentMode;
+    checkDailyStatus();
     try { localStorage.setItem(DIFF_KEY, currentMode); } catch (e) {}
     renderAllRecords();
     if (window.Rating) window.Rating.setMode(currentMode);
