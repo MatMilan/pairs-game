@@ -185,6 +185,31 @@
         return refresh(silent);
     }
 
+    async function checkDailyPlayed(date) {
+        if (!supabaseClient) return false;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return false;
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('daily_results')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .eq('date', date)
+                .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') {
+                console.warn('Ошибка проверки Daily:', error);
+                return false;
+            }
+
+            return data !== null;
+        } catch (e) {
+            console.warn('Ошибка проверки Daily:', e);
+            return false;
+        }
+    }
+   
     // ===== Google Auth =====
     async function signInWithGoogle() {
         if (!supabaseClient) return setStatus('Supabase не инициализирован', true);
@@ -259,6 +284,7 @@
         enabled, getPlayer, setPlayer, setStatus,
         submitRun, getTop, refresh, setMode,
         signInWithGoogle, signOut, checkAuth,
+        checkDailyPlayed,
     };
 
     init();
