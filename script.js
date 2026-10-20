@@ -267,6 +267,7 @@ function startGame() {
 
     if (activeMode === 'daily') {
         gameSeed = getDailySeed(getTodayString());
+        console.log('Daily seed:', gameSeed, 'for date:', getTodayString());
     } else if (activeMode === 'classic') {
         gameSeed = 0;
     } else {
