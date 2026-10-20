@@ -23,14 +23,37 @@ function mulberry32(seed) {
     };
 }
 
+const DAILY_SECRET = 'pairs-game-daily-v1';
+
+function hashString(str) {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        hash = hash & 0x7FFFFFFF;
+    }
+    return hash;
+}
+
+function getTodayString() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function getDailySeed(dateString) {
+    return hashString(dateString + DAILY_SECRET);
+}
 // ===== Уровни сложности =====
 const LEVEL_CONFIG = {
     classic: { rows: 3, groups: null, label: 'Classic' },
     level1:  { rows: 2, groups: [[1,9],[2,8],[3,7]], label: 'Easy' },
     level2:  { rows: 3, groups: [[1,9],[2,8],[3,7],[4,6]], label: 'Medium' },
     level3:  { rows: 3, groups: [[1,9],[2,8],[3,7],[4,6],[5]], label: 'Hard' },
+    daily:   { rows: 3, groups: [[1,9],[2,8],[3,7],[4,6],[5]], label: 'Daily' },
 };
-const MODES = ['classic','level1','level2','level3'];
+const MODES = ['classic', 'level1', 'level2', 'level3', 'daily'];
 const DIFF_KEY = 'pairsGameDifficulty';
 let currentMode = 'classic';  // выбранный режим (UI + рекорды)
 let activeMode  = 'classic';  // режим текущей партии
@@ -242,7 +265,13 @@ function startGame() {
     activeMode = currentMode;
     resetStats();
 
-    gameSeed = (activeMode === 'classic') ? 0 : Math.floor(Math.random() * 2147483647);
+    if (activeMode === 'daily') {
+        gameSeed = getDailySeed(getTodayString());
+    } else if (activeMode === 'classic') {
+        gameSeed = 0;
+    } else {
+        gameSeed = Math.floor(Math.random() * 2147483647);
+    }
     gameMoves = [];
 
     fillStartRows();
@@ -843,6 +872,7 @@ function queueOnlineResult(seconds) {
         seed: gameSeed,
         moves: gameMoves,
         time: seconds,
+        date: (activeMode === 'daily') ? getTodayString() : null,
         sent: false,
     };
 
@@ -870,6 +900,7 @@ async function sendOnlineResult() {
             seed: run.seed,
             moves: run.moves,
             time: run.time,
+            date: run.date,
         });
         run.sent = true;
         await window.Rating.setMode(run.mode, true);
