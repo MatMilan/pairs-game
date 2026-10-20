@@ -9,6 +9,19 @@ let isGameActive = false;
 let canUndo = true;
 let isPaused = false;
 let pendingRun = null; // победная партия, готовая к отправке в рейтинг
+let gameSeed = 0;
+let gameMoves = [];
+
+// Детерменированный генератор сида
+function mulberry32(seed) {
+    let t = seed >>> 0;
+    return function() {
+        t += 0x6D2B79F5;
+        let r = Math.imul(t ^ (t >>> 15), t | 1);
+        r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+        return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+}
 
 // ===== Уровни сложности =====
 const LEVEL_CONFIG = {
@@ -228,15 +241,13 @@ function startGame() {
     canUndo = true;
     activeMode = currentMode;
     resetStats();
+
+    gameSeed = (activeMode === 'classic') ? 0 : Math.floor(Math.random() * 2147483647);
+    gameMoves = [];
+
     fillStartRows();
     startTimer();
     updateStatus('Игра началась! Режим: ' + LEVEL_CONFIG[activeMode].label);
-}
-
-function fillStartRows() {
-    if (activeMode === 'classic') fillClassicRows();
-    else fillRandomRows(activeMode);
-    renderBoard();
 }
 
 function fillClassicRows() {
@@ -249,34 +260,27 @@ function fillClassicRows() {
     }
 }
 
-function fillRandomRows(mode) {
+function fillRandomRows(mode, seed) {
     const config = LEVEL_CONFIG[mode];
     const groups = config.groups;
-    const totalCells = config.rows * COLS;
-    const pairCount = Math.floor(totalCells / 2);
+    const pairCount = Math.floor((config.rows * COLS) / 2);
+    const rng = mulberry32(seed);
     const digits = [];
-    // генерируем парами, чтобы каждую цифру можно было убрать
     for (let i = 0; i < pairCount; i++) {
         const group = groups[i % groups.length];
-        const d1 = group[Math.floor(Math.random() * group.length)];
-        const d2 = group[Math.floor(Math.random() * group.length)];
-        digits.push(d1, d2);
+        digits.push(group[Math.floor(rng() * group.length)]);
+        digits.push(group[Math.floor(rng() * group.length)]);
     }
-    shuffleArray(digits);
+    for (let i = digits.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [digits[i], digits[j]] = [digits[j], digits[i]];
+    }
     let idx = 0;
     for (let r = 0; r < config.rows && idx < digits.length; r++) {
         for (let c = 0; c < COLS && idx < digits.length; c++) {
             board[r][c] = digits[idx++];
         }
     }
-}
-
-function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
 }
 
 function renderBoard() {
@@ -334,7 +338,11 @@ function handleCellClick(r, c) {
             removePair(first, second);
             history.push(snapshot);
             canUndo = true;
-
+            gameMoves.push({
+                type: 'remove',
+                cell: { r: first.r, c: first.c },
+                cell2: { r: second.r, c: second.c },
+            });
             pairsRemoved++;
             pairsCounterEl.textContent = pairsRemoved;
 
@@ -696,6 +704,7 @@ function undoLast() {
     if (!canUndo || history.length === 0) { updateStatus('Нельзя отменить'); return; }
     const snapshot = history.pop();
     board = snapshot;
+    gameMoves.push({ type: 'undo' });
     selected = null;
     pairsRemoved = Math.max(0, pairsRemoved - 1);
     pairsCounterEl.textContent = pairsRemoved;
@@ -748,6 +757,7 @@ function redrawGame() {
         board = newBoard;
         canUndo = false;
         selected = null;
+        gameMoves.push({ type: 'redraw' });
         renderBoard();
         playSound('select');
         updateStatus('Перерисовано: добавлены недостающие цифры');
@@ -824,17 +834,19 @@ document.getElementById('btn-hint').addEventListener('click', giveHint);
 
 // ===== Онлайн-рейтинг: подготовка и отправка =====
 function queueOnlineResult(seconds) {
-    pendingRun = { mode: activeMode, time: seconds, pairs: pairsRemoved, sent: false };
+    pendingRun = {
+        mode: activeMode,
+        seed: gameSeed,
+        moves: gameMoves,
+        time: seconds,
+        sent: false,
+    };
 
     const sendBtn = document.getElementById('btn-rating-send');
     if (sendBtn) sendBtn.disabled = false;
 
     if (window.Rating && window.Rating.enabled) {
-        if (window.Rating.getPlayer()) {
-            sendOnlineResult();
-        } else {
-            window.Rating.setStatus('🏅 Введите имя и нажмите «Отправить результат»');
-        }
+        sendOnlineResult();
     }
 }
 
@@ -842,27 +854,22 @@ async function sendOnlineResult() {
     if (!pendingRun || pendingRun.sent) return;
     if (!window.Rating || !window.Rating.enabled) return;
 
-    const name = window.Rating.getPlayer();
     const status = (t, err) => window.Rating.setStatus(t, err);
-
-    if (!name) {
-        status('⚠️ Сначала введите имя в поле «Ваше имя»', true);
-        const input = document.getElementById('player-name');
-        if (input) input.focus();
-        return;
-    }
-
     const run = pendingRun;
     const btn = document.getElementById('btn-rating-send');
     if (btn) btn.disabled = true;
-    status('Отправляем результат…');
+    status('Проверка и отправка результата…');
 
     try {
-        await window.Rating.submitRun(run.mode, run.time, run.pairs, name);
+        const result = await window.Rating.submitRun({
+            mode: run.mode,
+            seed: run.seed,
+            moves: run.moves,
+            time: run.time,
+        });
         run.sent = true;
-        // silent = true, чтобы загрузка не затёрла сообщение об успехе
         await window.Rating.setMode(run.mode, true);
-        status('✅ Результат отправлен! Ваша строка подсвечена.');
+        status('✅ Результат проверен и отправлен! Игрок: ' + result.player);
     } catch (e) {
         if (btn) btn.disabled = false;
         status('⚠️ Не отправлено: ' + e.message, true);
