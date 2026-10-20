@@ -190,7 +190,7 @@
         if (!supabaseClient) return setStatus('Supabase не инициализирован', true);
         const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: window.location.origin },
+            options: { redirectTo: window.location.origin + window.location.pathname },
         });
         if (error) setStatus('Ошибка входа: ' + error.message, true);
     }
