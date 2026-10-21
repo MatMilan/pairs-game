@@ -183,7 +183,6 @@
 
             const date = document.createElement('span');
             date.className = 'rating-date';
-            // Для Daily показываем дату из поля date, для остальных - created_at
             const displayDate = isDaily ? r.date : r.created_at;
             date.textContent = new Date(displayDate).toLocaleDateString('ru-RU');
 
@@ -191,9 +190,17 @@
 
             const value = document.createElement('span');
             value.className = 'rating-value';
-            value.textContent = kind === 'time'
-                ? `${String(Math.floor(r.time / 60)).padStart(2, '0')}:${String(r.time % 60).padStart(2, '0')}`
-                : `${r.pairs} пар`;
+            
+            // Для Daily используем r.time и r.pairs, для остальных — r.value
+            if (isDaily) {
+                value.textContent = kind === 'time'
+                    ? `${String(Math.floor(r.time / 60)).padStart(2, '0')}:${String(r.time % 60).padStart(2, '0')}`
+                    : `${r.pairs} пар`;
+            } else {
+                value.textContent = kind === 'time'
+                    ? `${String(Math.floor(r.value / 60)).padStart(2, '0')}:${String(r.value % 60).padStart(2, '0')}`
+                    : `${r.value} пар`;
+            }
 
             li.append(who, value);
             list.appendChild(li);
@@ -313,7 +320,12 @@
     }
 
     function init() {
-        // 1. Поле ввода имени
+        // Скрыть подтабы Daily при загрузке (они покажутся только если выбран Daily)
+        const dailySubtabs = $('daily-subtabs');
+        if (dailySubtabs) {
+            dailySubtabs.style.display = 'none';
+        }
+       // 1. Поле ввода имени
         const input = $('player-name');
         if (input) {
             input.value = getPlayer();
