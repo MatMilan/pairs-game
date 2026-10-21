@@ -16,6 +16,7 @@
 
     let mode = 'classic';
     let kind = 'time';
+    let dailyPeriod = 'today'; // 'today' | 'yesterday' | 'all'   
     let ticket = 0;
     let currentUser = null;
     let supabaseClient = null;
@@ -66,16 +67,65 @@
             clearTimeout(timeout);
         }
     }
+    async function requestTable(tableName, paramsObj) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        const params = new URLSearchParams(paramsObj);
 
+        try {
+            const res = await fetch(CONFIG.url + '/rest/v1/' + tableName + '?' + params.toString(), {
+                signal: controller.signal,
+                headers: {
+                    apikey: CONFIG.key,
+                    Authorization: 'Bearer ' + CONFIG.key,
+                    'Content-Type': 'application/json',
+                    Prefer: 'return=representation'
+                },
+            });
+            const text = await res.text();
+            if (!res.ok) {
+                let detail = text;
+                try { detail = JSON.parse(text).message || text; } catch {}
+                throw new Error(String(detail).slice(0, 160));
+            }
+            return text ? JSON.parse(text) : [];
+        } catch (e) {
+            if (e.name === 'AbortError') throw new Error('тайм-аут сети');
+            throw e;
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
     async function getTop(m, k) {
-        const params = new URLSearchParams({
-            select: 'player,value,created_at',
-            mode: 'eq.' + m,
-            kind: 'eq.' + k,
-            order: 'value.asc,created_at.asc',
-            limit: String(CONFIG.topLimit),
-        });
-        return request(CONFIG.table + '?' + params.toString());
+        if (m === 'daily') {
+            // Специальный запрос для Daily
+            const today = new Date().toISOString().split('T')[0];
+            let dateFilter = {};
+            if (dailyPeriod === 'today') {
+                dateFilter = { date: `eq.${today}` };
+            } else if (dailyPeriod === 'yesterday') {
+                const d = new Date(); d.setDate(d.getDate() - 1);
+                dateFilter = { date: `eq.${d.toISOString().split('T')[0]}` };
+            }
+
+            const params = {
+                select: 'player_name,time,pairs,created_at',
+                order: `${k}.asc,created_at.asc`,
+                limit: String(CONFIG.topLimit),
+                ...dateFilter
+            };
+            return requestTable('daily_results', params);
+        } else {
+            // Обычный запрос для Classic, Easy, Medium, Hard
+            const params = {
+                select: 'player,value,created_at',
+                mode: `eq.${m}`,
+                kind: `eq.${k}`,
+                order: 'value.asc,created_at.asc',
+                limit: String(CONFIG.topLimit),
+            };
+            return requestTable(CONFIG.table, params);
+        }
     }
 
     // Отправка через Edge Function (античит)
@@ -104,7 +154,7 @@
             b.classList.toggle('active', b.dataset.kind === kind));
     }
 
-    function render(rows) {
+    function render(rows, isDaily = false) {
         const list = $('rating-list');
         if (!list) return;
         list.innerHTML = '';
@@ -113,40 +163,43 @@
         if (!rows.length) {
             const li = document.createElement('li');
             li.className = 'empty';
-            li.textContent = 'Пока пусто. Станьте первым!';
+            li.textContent = isDaily ? 'В этот период пока нет побед' : 'Пока пусто. Станьте первым!';
             list.appendChild(li);
             return;
         }
 
         rows.forEach(r => {
             const li = document.createElement('li');
-            if (me && r.player.toLowerCase() === me) li.classList.add('is-me');
+            const playerName = isDaily ? (r.player_name || 'Игрок') : r.player;
+            if (me && playerName.toLowerCase() === me) li.classList.add('is-me');
 
             const who = document.createElement('div');
             who.className = 'rating-who';
 
             const name = document.createElement('span');
             name.className = 'rating-name';
-            name.textContent = r.player;
-            name.title = r.player;
+            name.textContent = playerName;
+            name.title = playerName;
 
             const date = document.createElement('span');
             date.className = 'rating-date';
-            date.textContent = new Date(r.created_at).toLocaleDateString('ru-RU');
+            // Для Daily показываем дату из поля date, для остальных - created_at
+            const displayDate = isDaily ? r.date : r.created_at;
+            date.textContent = new Date(displayDate).toLocaleDateString('ru-RU');
 
             who.append(name, date);
 
             const value = document.createElement('span');
             value.className = 'rating-value';
             value.textContent = kind === 'time'
-                ? `${String(Math.floor(r.value / 60)).padStart(2, '0')}:${String(r.value % 60).padStart(2, '0')}`
-                : `${r.value} пар`;
+                ? `${String(Math.floor(r.time / 60)).padStart(2, '0')}:${String(r.time % 60).padStart(2, '0')}`
+                : `${r.pairs} пар`;
 
             li.append(who, value);
             list.appendChild(li);
         });
     }
-
+   
     async function refresh(silent = false) {
         const list = $('rating-list');
         if (!list) return;
@@ -163,10 +216,11 @@
 
         const myTicket = ++ticket;
         if (!silent) setStatus('Загрузка…');
+
         try {
             const rows = await getTop(mode, kind);
             if (myTicket !== ticket) return;
-            render(rows);
+            render(rows, mode === 'daily');
             if (!silent) {
                 const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
                 setStatus(`Топ-${rows.length} · обновлено в ${t}`);
@@ -272,6 +326,15 @@
                 paintTabs();
                 refresh();
             }));
+        // Обработчики подтабов Daily
+        document.querySelectorAll('.daily-subtab').forEach(b => {
+            b.addEventListener('click', () => {
+                dailyPeriod = b.dataset.period;
+                document.querySelectorAll('.daily-subtab').forEach(btn => btn.classList.remove('active'));
+                b.classList.add('active');
+                refresh();
+            });
+        });       
         const btn = $('btn-rating-refresh');
         if (btn) btn.addEventListener('click', () => refresh());
 
