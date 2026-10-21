@@ -972,24 +972,45 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ===== Выбор сложности =====
+// ===== Обработчик смены сложности =====
 difficultySelect.addEventListener('change', () => {
     currentMode = difficultySelect.value;
-    activeMode = currentMode;
-    checkDailyStatus();
+    activeMode = currentMode; // Синхронизируем активный режим для проверки статуса
     try { localStorage.setItem(DIFF_KEY, currentMode); } catch (e) {}
+    
+    // Показываем подтабы Daily только если выбран Daily
+    const dailySubtabs = document.getElementById('daily-subtabs');
+    if (dailySubtabs) {
+        dailySubtabs.style.display = (currentMode === 'daily') ? 'flex' : 'none';
+    }
+
+    checkDailyStatus(); // Проверяем, играл ли уже сегодня
     renderAllRecords();
+    
     if (window.Rating) window.Rating.setMode(currentMode);
-    if (isGameActive) updateStatus('Режим «' + LEVEL_CONFIG[currentMode].label + '» — со следующего старта');
-    else updateStatus('Выбран режим: ' + LEVEL_CONFIG[currentMode].label);
+    
+    if (isGameActive) {
+        updateStatus('Режим «' + LEVEL_CONFIG[currentMode].label + '» — со следующего старта');
+    } else {
+        updateStatus('Выбран режим: ' + LEVEL_CONFIG[currentMode].label);
+    }
 });
 
+// ===== Инициализация сложности при загрузке =====
 function initDifficulty() {
     let saved = 'classic';
     try { saved = localStorage.getItem(DIFF_KEY) || 'classic'; } catch (e) {}
     if (!LEVEL_CONFIG[saved]) saved = 'classic';
+    
     currentMode = saved;
+    activeMode = saved;
     difficultySelect.value = saved;
+    
+    // Инициализация видимости подтабов при старте
+    const dailySubtabs = document.getElementById('daily-subtabs');
+    if (dailySubtabs) {
+        dailySubtabs.style.display = (currentMode === 'daily') ? 'flex' : 'none';
+    }
 }
 
 // ===== Кнопка отправки в онлайн-рейтинг =====
