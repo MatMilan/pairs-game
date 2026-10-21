@@ -1020,8 +1020,10 @@ if (ratingSendBtn) ratingSendBtn.addEventListener('click', sendOnlineResult);
 if (window.Rating) window.Rating.setMode(currentMode);
 
 // ===== Инициализация =====
-initBoard();
-initThemes();
-initDifficulty();
-renderAllRecords();
-renderHintsLamps();
+document.addEventListener('DOMContentLoaded', () => {
+    initBoard();
+    initThemes();
+    initDifficulty();
+    renderAllRecords();
+    renderHintsLamps();
+});
