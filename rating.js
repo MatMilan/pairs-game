@@ -150,8 +150,15 @@
     function paintTabs() {
         document.querySelectorAll('#rating-tabs button').forEach(b =>
             b.classList.toggle('active', b.dataset.mode === mode));
+
         document.querySelectorAll('#rating-kinds button').forEach(b =>
             b.classList.toggle('active', b.dataset.kind === kind));
+
+        // Единое управление видимостью подтабов Daily
+        const subtabs = $('daily-subtabs');
+        if (subtabs) {
+            subtabs.style.display = (mode === 'daily') ? 'flex' : 'none';
+        }
     }
 
     function render(rows, isDaily = false) {
@@ -320,11 +327,6 @@
     }
 
     function init() {
-        // Скрыть подтабы Daily при загрузке (они покажутся только если выбран Daily)
-        const dailySubtabs = $('daily-subtabs');
-        if (dailySubtabs) {
-            dailySubtabs.style.display = 'none';
-        }
        // 1. Поле ввода имени
         const input = $('player-name');
         if (input) {
