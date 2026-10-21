@@ -975,20 +975,14 @@ document.addEventListener('keydown', (e) => {
 // ===== Обработчик смены сложности =====
 difficultySelect.addEventListener('change', () => {
     currentMode = difficultySelect.value;
-    activeMode = currentMode; // Синхронизируем активный режим для проверки статуса
+    activeMode = currentMode;
     try { localStorage.setItem(DIFF_KEY, currentMode); } catch (e) {}
-    
-    // Показываем подтабы Daily только если выбран Daily
-    const dailySubtabs = document.getElementById('daily-subtabs');
-    if (dailySubtabs) {
-        dailySubtabs.style.display = (currentMode === 'daily') ? 'flex' : 'none';
-    }
 
-    checkDailyStatus(); // Проверяем, играл ли уже сегодня
+    checkDailyStatus();
     renderAllRecords();
-    
+
     if (window.Rating) window.Rating.setMode(currentMode);
-    
+
     if (isGameActive) {
         updateStatus('Режим «' + LEVEL_CONFIG[currentMode].label + '» — со следующего старта');
     } else {
@@ -1001,23 +995,15 @@ function initDifficulty() {
     let saved = 'classic';
     try { saved = localStorage.getItem(DIFF_KEY) || 'classic'; } catch (e) {}
     if (!LEVEL_CONFIG[saved]) saved = 'classic';
-    
+
     currentMode = saved;
     activeMode = saved;
     difficultySelect.value = saved;
-    
-    // Инициализация видимости подтабов при старте
-    const dailySubtabs = document.getElementById('daily-subtabs');
-    if (dailySubtabs) {
-        dailySubtabs.style.display = (currentMode === 'daily') ? 'flex' : 'none';
-    }
 }
 
 // ===== Кнопка отправки в онлайн-рейтинг =====
 const ratingSendBtn = document.getElementById('btn-rating-send');
 if (ratingSendBtn) ratingSendBtn.addEventListener('click', sendOnlineResult);
-
-if (window.Rating) window.Rating.setMode(currentMode);
 
 // ===== Инициализация =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -1026,4 +1012,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initDifficulty();
     renderAllRecords();
     renderHintsLamps();
+    if (window.Rating) window.Rating.setMode(currentMode);
 });
