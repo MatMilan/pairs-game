@@ -109,7 +109,7 @@
             }
 
             const params = {
-                select: 'player_name,time,pairs,created_at',
+                select: 'player_name,date,time,pairs,created_at',
                 order: `${k}.asc,created_at.asc`,
                 limit: String(CONFIG.topLimit),
                 ...dateFilter
