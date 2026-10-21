@@ -313,33 +313,49 @@
     }
 
     function init() {
+        // 1. Поле ввода имени
         const input = $('player-name');
         if (input) {
             input.value = getPlayer();
             input.addEventListener('input', () => setPlayer(input.value.trim()));
         }
-        document.querySelectorAll('#rating-tabs button').forEach(b =>
-            b.addEventListener('click', () => setMode(b.dataset.mode)));
-        document.querySelectorAll('#rating-kinds button').forEach(b =>
+
+        // 2. Основные вкладки режимов (Classic, Easy, Medium, Hard, Daily)
+        document.querySelectorAll('#rating-tabs button').forEach(b => {
+            b.addEventListener('click', () => setMode(b.dataset.mode));
+        });
+
+        // 3. Вкладки типа результата (Время / Пары)
+        document.querySelectorAll('#rating-kinds button').forEach(b => {
             b.addEventListener('click', () => {
                 kind = b.dataset.kind;
                 paintTabs();
                 refresh();
-            }));
-        // Обработчики подтабов Daily
+            });
+        });
+
+        // 4. Кнопка обновления рейтинга
+        const btn = $('btn-rating-refresh');
+        if (btn) btn.addEventListener('click', () => refresh());
+
+        // 5. НОВЫЕ: Подтабы для Daily (Сегодня / Вчера / За всё время)
         document.querySelectorAll('.daily-subtab').forEach(b => {
             b.addEventListener('click', () => {
                 dailyPeriod = b.dataset.period;
+                // Снимаем активный класс со всех подтабов и ставим на нажатый
                 document.querySelectorAll('.daily-subtab').forEach(btn => btn.classList.remove('active'));
                 b.classList.add('active');
                 refresh();
             });
-        });       
-        const btn = $('btn-rating-refresh');
-        if (btn) btn.addEventListener('click', () => refresh());
+        });
 
+        // 6. Начальная отрисовка
         paintTabs();
-        if (!enabled) setStatus('Рейтинг не подключён: заполните CONFIG', true);
+        if (!enabled) {
+            setStatus('Рейтинг не подключён: заполните CONFIG', true);
+        }
+        
+        // 7. Проверка авторизации
         checkAuth();
     }
 
