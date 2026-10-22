@@ -133,10 +133,15 @@
                     <button data-kind="time" class="rating-kind active">⏱️ Время</button>
                     <button data-kind="pairs" class="rating-kind">🎯 Пары</button>
                 </div>
-                <div class="daily-subtabs" id="daily-subtabs" style="display: none !important;">
+                <div class="daily-subtabs" id="daily-subtabs" style="display: none;">
                     <button data-period="today" class="daily-subtab active">Сегодня</button>
                     <button data-period="yesterday" class="daily-subtab">Вчера</button>
                     <button data-period="all" class="daily-subtab">За всё время</button>
+                    <button data-period="archive" class="daily-subtab">Архив</button>
+                </div>
+
+                <div class="daily-archive-picker" id="daily-archive-picker" style="display: none;">
+                    <select id="daily-archive-select" class="daily-archive-select"></select>
                 </div>
                 <ol class="records-list rating-list" id="rating-list"></ol>
 
