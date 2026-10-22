@@ -1258,19 +1258,37 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDailyPanel();
     startDailyTimer();    
 });
-// ===== Привязка туториала =====
+// ===== Привязка туториала (делегирование событий) =====
 document.getElementById('btn-start-tutorial').addEventListener('click', startTutorial);
-document.getElementById('tutorial-btn-next').addEventListener('click', nextTutorialStep);
-document.getElementById('tutorial-btn-back').addEventListener('click', prevTutorialStep);
-document.getElementById('tutorial-btn-skip').addEventListener('click', () => endTutorial(true));
 
-window.addEventListener('resize', () => {
-    if (tutorialActive) renderTutorialStep();
+// Единый обработчик кликов для всех кнопок туториала
+document.addEventListener('click', (e) => {
+    if (!tutorialActive) return;
+    if (e.target.closest('#tutorial-btn-next')) {
+        nextTutorialStep();
+    } else if (e.target.closest('#tutorial-btn-back')) {
+        prevTutorialStep();
+    } else if (e.target.closest('#tutorial-btn-skip')) {
+        endTutorial(true);
+    }
 });
 
+// Единый обработчик клавиатуры для туториала
 document.addEventListener('keydown', (e) => {
     if (!tutorialActive) return;
-    if (e.key === 'Escape') endTutorial(true);
-    else if (e.key === 'ArrowRight') nextTutorialStep();
-    else if (e.key === 'ArrowLeft') prevTutorialStep();
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        endTutorial(true);
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextTutorialStep();
+    } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevTutorialStep();
+    }
+});
+
+// Перепозиционирование при изменении размера окна
+window.addEventListener('resize', () => {
+    if (tutorialActive) renderTutorialStep();
 });
