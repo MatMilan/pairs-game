@@ -114,6 +114,9 @@
                     <p><b>Бонус:</b> 3 пары одного цвета подряд → +1 подсказка.</p>
                     <p><b>Режимы:</b> Classic; Easy; Medium; Hard.</p>
                     <p><b>Клавиши:</b> Space — старт/пауза, Z — отмена, H — подсказка, R — сдвиг.</p>
+                    <button id="btn-start-tutorial" class="btn btn-primary tutorial-start-btn">
+                        🎓 Пройти обучение
+                    </button>                    
                 </div>
             </details>
 
@@ -193,5 +196,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="rating.js"></script>
     <script src="script.js"></script>
+    <!-- ===== Туториал ===== -->
+    <div id="tutorial-root" style="display: none;">
+        <div class="tutorial-spotlight" id="tutorial-spotlight"></div>
+        <div class="tutorial-callout" id="tutorial-callout">
+            <div class="tutorial-step-counter" id="tutorial-step-counter"></div>
+            <div class="tutorial-title" id="tutorial-title"></div>
+            <div class="tutorial-text" id="tutorial-text"></div>
+            <div class="tutorial-nav">
+                <button class="tutorial-btn" id="tutorial-btn-back">← Назад</button>
+                <button class="tutorial-btn tutorial-btn-skip" id="tutorial-btn-skip">Пропустить</button>
+                <button class="tutorial-btn tutorial-btn-next" id="tutorial-btn-next">Далее →</button>
+            </div>
+        </div>
+    </div>    
 </body>
 </html>
