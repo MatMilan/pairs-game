@@ -866,3 +866,95 @@ body {
     font-variant-numeric: tabular-nums;
     letter-spacing: 2px;
 }
+/* ===== Туториал ===== */
+#tutorial-root {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    pointer-events: auto;
+}
+#tutorial-root.dimmed {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.tutorial-spotlight {
+    position: fixed;
+    z-index: 20001;
+    border-radius: 12px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+    border: 2px solid var(--accent1);
+    pointer-events: none;
+    transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+
+.tutorial-callout {
+    position: fixed;
+    z-index: 20002;
+    width: 340px;
+    max-width: calc(100vw - 32px);
+    background: var(--panel-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.tutorial-step-counter {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.tutorial-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 8px;
+}
+
+.tutorial-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-main);
+    margin-bottom: 16px;
+}
+
+.tutorial-nav {
+    display: flex;
+    gap: 8px;
+}
+
+.tutorial-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--btn-sec-border);
+    background: var(--btn-sec-bg);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.tutorial-btn:hover {
+    background: var(--btn-sec-hover);
+}
+.tutorial-btn-next {
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #fff;
+    border: none;
+}
+.tutorial-btn-skip {
+    flex: 0.7;
+}
+
+.tutorial-start-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+}
