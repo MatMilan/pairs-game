@@ -759,3 +759,27 @@ body {
     background: var(--cell-bg);
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+/* ===== Выбор даты архива ===== */
+.daily-archive-picker {
+    margin-bottom: 10px;
+}
+
+.daily-archive-select {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+    background: var(--status-bg);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.daily-archive-select:focus {
+    border-color: var(--accent1);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+}
