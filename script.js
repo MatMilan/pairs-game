@@ -1365,8 +1365,19 @@ function positionCalloutForInteractive() {
     const callout = document.getElementById('tutorial-callout');
     callout.style.display = 'block';
     const cw = callout.offsetWidth;
-    callout.style.top = '80px';
-    callout.style.left = Math.max(16, (window.innerWidth - cw) / 2) + 'px';
+    const ch = callout.offsetHeight;
+
+    // Прокручиваем игровое поле так, чтобы первая строка была видна
+    const firstCell = table.querySelector('td');
+    if (firstCell) {
+        firstCell.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+
+    // Ставим карточку внизу экрана, чтобы она не закрывала поле
+    setTimeout(() => {
+        callout.style.top = Math.max(16, window.innerHeight - ch - 24) + 'px';
+        callout.style.left = Math.max(16, (window.innerWidth - cw) / 2) + 'px';
+    }, 350);
 }
 // ===== Горячие клавиши =====
 document.addEventListener('keydown', (e) => {
