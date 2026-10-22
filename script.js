@@ -359,6 +359,7 @@ function initBoard() {
 }
 
 function startGame() {
+    if (tutorialActive) return;
     initAudio();
     initBoard();
     history = [];
@@ -452,6 +453,10 @@ function renderBoard() {
 }
 
 function handleCellClick(r, c) {
+    if (tutorialActive) {
+        handleTutorialClick(r, c);
+        return;
+    }
     if (!isGameActive || isPaused) return;
 
     const val = board[r][c];
@@ -632,6 +637,7 @@ function showBonusPopup(text) {
 
 // ===== Пауза =====
 function togglePause() {
+    if (tutorialActive) return;
     if (!isGameActive) return;
     if (isPaused) resumeGame();
     else pauseGame();
@@ -838,6 +844,7 @@ function renderAllRecords() {
 
 // ===== Отмена / Сдвиг / Подсказка =====
 function undoLast() {
+    if (tutorialActive) return;
     if (!isGameActive || isPaused) return;
     if (!canUndo || history.length === 0) { updateStatus('Нельзя отменить'); return; }
     const snapshot = history.pop();
@@ -856,6 +863,7 @@ function undoLast() {
 }
 
 function redrawGame() {
+    if (tutorialActive) return;
     if (!isGameActive || isPaused) return;
 
     const remainingDigits = [];
@@ -903,6 +911,7 @@ function redrawGame() {
 }
 
 function giveHint() {
+    if (tutorialActive) return;
     if (!isGameActive || isPaused) return;
     if (hintsRemaining <= 0) {
         playSound('error');
@@ -1024,6 +1033,8 @@ async function sendOnlineResult() {
 const TUTORIAL_KEY = 'tutorialCompleted';
 let tutorialActive = false;
 let tutorialStep = 0;
+let tutorialSavedState = null;   // сохранённое состояние игры до демо
+let tutorialDemoActive = false;  // загружено ли сейчас демо-поле
 
 const TUTORIAL_STEPS = [
     {
@@ -1071,6 +1082,39 @@ const TUTORIAL_STEPS = [
         title: '🏆 Онлайн-рейтинг',
         text: 'Соревнуйтесь с другими игроками! Выберите режим, войдите через Google и выиграйте — ваш результат попадёт в рейтинг. Есть вкладки: Сегодня, Вчера, За всё время и Архив.'
     },
+        {
+        interactive: true,
+        setupDemo: true,
+        title: '🎮 Попробуйте сами!',
+        text: 'Я подготовил небольшое поле. Кликните на цифру 3, чтобы выбрать её.',
+        highlight: [{ r: 0, c: 0 }],
+        expectClick: { r: 0, c: 0 },
+        afterClick: 'select'
+    },
+    {
+        interactive: true,
+        title: '🔗 Теперь составьте пару',
+        text: 'Цифра 3 выбрана. Кликните на цифру 7 — вместе они дают 10, это пара!',
+        highlight: [{ r: 0, c: 1 }],
+        expectClick: { r: 0, c: 1 },
+        afterClick: 'removePair'
+    },
+    {
+        interactive: true,
+        title: '👍 Отлично! Ещё одна пара',
+        text: 'Пара 3 и 7 убрана. Теперь кликните на первую пятёрку.',
+        highlight: [{ r: 0, c: 2 }],
+        expectClick: { r: 0, c: 2 },
+        afterClick: 'select'
+    },
+    {
+        interactive: true,
+        title: '✨ Одинаковые цифры',
+        text: 'Кликните на вторую пятёрку. Две одинаковые цифры — тоже пара!',
+        highlight: [{ r: 0, c: 3 }],
+        expectClick: { r: 0, c: 3 },
+        afterClick: 'removePair'
+    },
     {
         target: '#btn-start',
         title: '🚀 Готово!',
@@ -1086,8 +1130,10 @@ function startTutorial() {
 }
 
 function endTutorial(markCompleted) {
+    if (tutorialDemoActive) restoreTutorialDemo();
     tutorialActive = false;
     document.getElementById('tutorial-root').style.display = 'none';
+    highlightTutorialCells(null);
     if (markCompleted) {
         try { localStorage.setItem(TUTORIAL_KEY, 'true'); } catch (e) {}
     }
@@ -1105,26 +1151,50 @@ function renderTutorialStep() {
 
     const backBtn = document.getElementById('tutorial-btn-back');
     const nextBtn = document.getElementById('tutorial-btn-next');
-    backBtn.style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
-    nextBtn.textContent = tutorialStep === total - 1 ? 'Завершить ✓' : 'Далее →';
 
-    if (step.target) {
-        const el = document.querySelector(step.target);
-        if (el) {
-            root.classList.remove('dimmed');
-            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-            setTimeout(() => {
-                if (!tutorialActive) return;
-                positionSpotlight(el);
-                positionCallout(el.getBoundingClientRect());
-            }, 350);
-            return;
-        }
+    // Переход с демо-поля обратно к обычному шагу — восстановить игру
+    if (!step.interactive && tutorialDemoActive) {
+        restoreTutorialDemo();
     }
-    // Нет цели или элемент не найден — центрируем с затемнением
-    root.classList.add('dimmed');
-    hideSpotlight();
-    centerCallout();
+
+    if (step.interactive) {
+        // Интерактивный шаг: клики по полю разрешены, Далее/Назад скрыты
+        root.classList.add('tutorial-interactive');
+        root.classList.remove('dimmed');
+        backBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+
+        if (step.setupDemo) setupTutorialDemo();
+        hideSpotlight();
+        highlightTutorialCells(step.highlight);
+        positionCalloutForInteractive();
+    } else {
+        // Обычный шаг
+        root.classList.remove('tutorial-interactive');
+        backBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'inline-block';
+        backBtn.style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
+        nextBtn.textContent = tutorialStep === total - 1 ? 'Завершить ✓' : 'Далее →';
+
+        highlightTutorialCells(null);
+
+        if (step.target) {
+            const el = document.querySelector(step.target);
+            if (el) {
+                root.classList.remove('dimmed');
+                el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                setTimeout(() => {
+                    if (!tutorialActive) return;
+                    positionSpotlight(el);
+                    positionCallout(el.getBoundingClientRect());
+                }, 350);
+                return;
+            }
+        }
+        root.classList.add('dimmed');
+        hideSpotlight();
+        centerCallout();
+    }
 }
 
 function positionSpotlight(el) {
@@ -1178,6 +1248,8 @@ function centerCallout() {
 }
 
 function nextTutorialStep() {
+    const step = TUTORIAL_STEPS[tutorialStep];
+    if (step && step.interactive) return; // интерактив проходится только кликами
     if (tutorialStep < TUTORIAL_STEPS.length - 1) {
         tutorialStep++;
         renderTutorialStep();
@@ -1187,10 +1259,114 @@ function nextTutorialStep() {
 }
 
 function prevTutorialStep() {
+    const step = TUTORIAL_STEPS[tutorialStep];
+    if (step && step.interactive) return;
     if (tutorialStep > 0) {
         tutorialStep--;
         renderTutorialStep();
     }
+}
+// ===== Интерактивный туториал =====
+function setupTutorialDemo() {
+    if (tutorialDemoActive) return;
+
+    // Сохраняем текущее состояние игры
+    tutorialSavedState = {
+        board: JSON.parse(JSON.stringify(board)),
+        isGameActive: isGameActive,
+        selected: selected,
+        timerWasRunning: !!timerInterval
+    };
+    if (timerInterval) freezeTimer();
+
+    // Загружаем демо-поле: две пары в первой строке
+    initBoard();
+    board[0][0] = 3;
+    board[0][1] = 7;
+    board[0][2] = 5;
+    board[0][3] = 5;
+    isGameActive = true;
+    selected = null;
+    renderBoard();
+
+    tutorialDemoActive = true;
+}
+
+function restoreTutorialDemo() {
+    if (!tutorialDemoActive) return;
+    if (tutorialSavedState) {
+        board = tutorialSavedState.board;
+        isGameActive = tutorialSavedState.isGameActive;
+        selected = tutorialSavedState.selected;
+        if (tutorialSavedState.timerWasRunning && isGameActive) resumeTimer();
+        tutorialSavedState = null;
+    }
+    highlightTutorialCells(null);
+    renderBoard();
+    tutorialDemoActive = false;
+}
+
+function highlightTutorialCells(cells) {
+    const tds = table.querySelectorAll('td');
+    tds.forEach(td => td.classList.remove('tutorial-target'));
+    if (cells) {
+        cells.forEach(({ r, c }) => {
+            const idx = r * COLS + c;
+            if (tds[idx]) tds[idx].classList.add('tutorial-target');
+        });
+    }
+}
+
+function handleTutorialClick(r, c) {
+    if (!tutorialActive) return;
+    const step = TUTORIAL_STEPS[tutorialStep];
+    if (!step || !step.interactive || !step.expectClick) return;
+
+    if (r === step.expectClick.r && c === step.expectClick.c) {
+        if (step.afterClick === 'select') {
+            selected = { r, c };
+            renderBoard();
+            advanceTutorial();
+        } else if (step.afterClick === 'removePair') {
+            if (selected) {
+                removePair(selected, { r, c });
+                selected = null;
+                renderBoard();
+                advanceTutorial();
+            }
+        }
+    } else {
+        showTutorialFeedback('Кликните на подсвеченную ячейку 🙂');
+    }
+}
+
+function advanceTutorial() {
+    if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+        tutorialStep++;
+        renderTutorialStep();
+    } else {
+        endTutorial(true);
+    }
+}
+
+function showTutorialFeedback(msg) {
+    const textEl = document.getElementById('tutorial-text');
+    const step = TUTORIAL_STEPS[tutorialStep];
+    textEl.textContent = msg;
+    textEl.classList.add('tutorial-feedback');
+    setTimeout(() => {
+        if (!tutorialActive) return;
+        textEl.textContent = step.text;
+        textEl.classList.remove('tutorial-feedback');
+    }, 1200);
+}
+
+function positionCalloutForInteractive() {
+    const callout = document.getElementById('tutorial-callout');
+    callout.style.display = 'block';
+    const cw = callout.offsetWidth;
+    callout.style.top = '80px';
+    callout.style.left = Math.max(16, (window.innerWidth - cw) / 2) + 'px';
 }
 // ===== Горячие клавиши =====
 document.addEventListener('keydown', (e) => {
@@ -1256,7 +1432,15 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHintsLamps();
     if (window.Rating) window.Rating.setMode(currentMode);
     updateDailyPanel();
-    startDailyTimer();    
+    startDailyTimer();
+    // Автозапуск туториала при первом посещении
+    setTimeout(() => {
+        try {
+            if (!localStorage.getItem(TUTORIAL_KEY)) {
+                startTutorial();
+            }
+        } catch (e) {}
+    }, 800);    
 });
 // ===== Привязка туториала (делегирование событий) =====
 document.getElementById('btn-start-tutorial').addEventListener('click', startTutorial);
