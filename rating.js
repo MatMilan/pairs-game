@@ -17,6 +17,7 @@
     let mode = 'classic';
     let kind = 'time';
     let dailyPeriod = 'today'; // 'today' | 'yesterday' | 'all'   
+    let archiveDate = null; // выбранная дата архива   
     let ticket = 0;
     let currentUser = null;
     let supabaseClient = null;
@@ -98,15 +99,18 @@
     }
     async function getTop(m, k) {
         if (m === 'daily') {
-            // Специальный запрос для Daily
             const today = new Date().toISOString().split('T')[0];
             let dateFilter = {};
+
             if (dailyPeriod === 'today') {
                 dateFilter = { date: `eq.${today}` };
             } else if (dailyPeriod === 'yesterday') {
                 const d = new Date(); d.setDate(d.getDate() - 1);
                 dateFilter = { date: `eq.${d.toISOString().split('T')[0]}` };
+            } else if (dailyPeriod === 'archive' && archiveDate) {
+                dateFilter = { date: `eq.${archiveDate}` };
             }
+            // 'all' — без фильтра
 
             const params = {
                 select: 'player_name,date,time,pairs,created_at',
@@ -127,7 +131,52 @@
             return requestTable(CONFIG.table, params);
         }
     }
+    async function loadArchiveDates() {
+        try {
+            const params = {
+                select: 'date',
+                order: 'date.desc',
+                limit: '60'
+            };
+            const rows = await requestTable('daily_results', params);
+            const unique = [...new Set(rows.map(r => r.date))];
+            return unique;
+        } catch (e) {
+            console.warn('Не удалось загрузить даты архива:', e);
+            return [];
+        }
+    }
 
+    async function switchToArchive() {
+        const dates = await loadArchiveDates();
+        const select = $('daily-archive-select');
+        if (!select) return;
+
+        select.innerHTML = '';
+
+        if (dates.length === 0) {
+            const opt = document.createElement('option');
+            opt.textContent = 'Нет данных';
+            select.appendChild(opt);
+            archiveDate = null;
+            refresh();
+            return;
+        }
+
+        dates.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = new Date(d).toLocaleDateString('ru-RU');
+            select.appendChild(opt);
+        });
+
+        // По умолчанию выбираем последнюю дату, не совпадающую с сегодня
+        const today = new Date().toISOString().split('T')[0];
+        archiveDate = dates.find(d => d !== today) || dates[0];
+        select.value = archiveDate;
+
+        refresh();
+    }
     // Отправка через Edge Function (античит)
     async function submitRun(payload) {
         if (!supabaseClient) throw new Error('Supabase не инициализирован');
@@ -237,7 +286,11 @@
             render(rows, mode === 'daily');
             if (!silent) {
                 const t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                setStatus(`Топ-${rows.length} · обновлено в ${t}`);
+                if (mode === 'daily') {
+                    setStatus(`Участников: ${rows.length} · обновлено в ${t}`);
+                } else {
+                    setStatus(`Топ-${rows.length} · обновлено в ${t}`);
+                }
             }
         } catch (e) {
             if (myTicket !== ticket) return;
@@ -352,22 +405,51 @@
         const btn = $('btn-rating-refresh');
         if (btn) btn.addEventListener('click', () => refresh());
 
-        // 5. НОВЫЕ: Подтабы для Daily (Сегодня / Вчера / За всё время)
+        // Подтабы для Daily (Сегодня / Вчера / За всё время / Архив)
         document.querySelectorAll('.daily-subtab').forEach(b => {
             b.addEventListener('click', () => {
                 dailyPeriod = b.dataset.period;
-                // Снимаем активный класс со всех подтабов и ставим на нажатый
                 document.querySelectorAll('.daily-subtab').forEach(btn => btn.classList.remove('active'));
                 b.classList.add('active');
-                refresh();
+
+                const picker = $('daily-archive-picker');
+                if (dailyPeriod === 'archive') {
+                    if (picker) picker.style.display = 'block';
+                    switchToArchive();
+                } else {
+                    if (picker) picker.style.display = 'none';
+                    refresh();
+                }
             });
         });
 
-        // 6. Начальная отрисовка
-        paintTabs();
-        if (!enabled) {
-            setStatus('Рейтинг не подключён: заполните CONFIG', true);
+        // Выбор конкретной даты в архиве
+        const archiveSelect = $('daily-archive-select');
+        if (archiveSelect) {
+            archiveSelect.addEventListener('change', (e) => {
+                archiveDate = e.target.value;
+                refresh();
+            });
         }
+        // 6. Начальная отрисовка
+    function paintTabs() {
+        document.querySelectorAll('#rating-tabs button').forEach(b =>
+            b.classList.toggle('active', b.dataset.mode === mode));
+
+        document.querySelectorAll('#rating-kinds button').forEach(b =>
+            b.classList.toggle('active', b.dataset.kind === kind));
+
+        const subtabs = $('daily-subtabs');
+        if (subtabs) {
+            subtabs.style.display = (mode === 'daily') ? 'flex' : 'none';
+        }
+
+        // Селект архива виден только если режим Daily И выбран подтаб «Архив»
+        const picker = $('daily-archive-picker');
+        if (picker) {
+            picker.style.display = (mode === 'daily' && dailyPeriod === 'archive') ? 'block' : 'none';
+        }
+    }
         
         // 7. Проверка авторизации
         checkAuth();
