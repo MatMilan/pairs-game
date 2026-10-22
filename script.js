@@ -1020,10 +1020,182 @@ async function sendOnlineResult() {
         status('⚠️ Не отправлено: ' + e.message, true);
     }
 }
+// ===== Туториал с подсветкой =====
+const TUTORIAL_KEY = 'tutorialCompleted';
+let tutorialActive = false;
+let tutorialStep = 0;
 
+const TUTORIAL_STEPS = [
+    {
+        target: null,
+        title: '👋 Добро пожаловать!',
+        text: 'Это игра «Пары чисел». Ваша цель — убрать все цифры с поля, находя и убирая пары. Этот короткий тур покажет, как играть.'
+    },
+    {
+        target: '#game-board',
+        title: '🎯 Игровое поле',
+        text: 'Здесь находятся цифры. Нажмите «Старт», чтобы заполнить поле. Каждая цифра — это ячейка, на которую можно кликнуть.'
+    },
+    {
+        target: '#game-board',
+        title: '🔗 Что такое пара?',
+        text: 'Пара — это две одинаковые цифры (например, 3 и 3) ИЛИ две цифры, дающие в сумме 10 (например, 3 и 7). Цифры одного цвета всегда могут образовать пару.'
+    },
+    {
+        target: '#game-board',
+        title: '👆 Как убрать пару',
+        text: 'Кликните на первую цифру — она подсветится. Затем кликните на вторую цифру пары. Если пара допустима, обе цифры исчезнут.'
+    },
+    {
+        target: '#game-board',
+        title: '📏 Правило соседства',
+        text: 'Между цифрами пары не должно быть других цифр. Они должны быть «соседями»: в одной строке, одном столбце, либо соединяться через край поля.'
+    },
+    {
+        target: '.controls-panel',
+        title: '🎮 Кнопки управления',
+        text: 'Старт — начать игру. Сдвиг — переместить оставшиеся цифры. Отмена — вернуть последний ход. Подсказка — показать доступную пару.'
+    },
+    {
+        target: '.hints-indicator',
+        title: '💡 Подсказки и комбо',
+        text: 'У вас 3 подсказки (жёлтые лампочки). Убирайте 3 пары одного цвета подряд, чтобы заработать бонусную подсказку!'
+    },
+    {
+        target: '.daily-panel',
+        title: '🗓️ Челлендж дня',
+        text: 'Каждый день — новое поле и отдельный рейтинг. Одна победа в день засчитывается в таблицу. Таймер показывает время до следующего челленджа.'
+    },
+    {
+        target: '.rating-card',
+        title: '🏆 Онлайн-рейтинг',
+        text: 'Соревнуйтесь с другими игроками! Выберите режим, войдите через Google и выиграйте — ваш результат попадёт в рейтинг. Есть вкладки: Сегодня, Вчера, За всё время и Архив.'
+    },
+    {
+        target: '#btn-start',
+        title: '🚀 Готово!',
+        text: 'Теперь вы знаете всё, что нужно. Нажмите «Старт» и удачи! Пройти обучение снова можно в блоке «Как играть».'
+    }
+];
+
+function startTutorial() {
+    tutorialActive = true;
+    tutorialStep = 0;
+    document.getElementById('tutorial-root').style.display = 'block';
+    renderTutorialStep();
+}
+
+function endTutorial(markCompleted) {
+    tutorialActive = false;
+    document.getElementById('tutorial-root').style.display = 'none';
+    if (markCompleted) {
+        try { localStorage.setItem(TUTORIAL_KEY, 'true'); } catch (e) {}
+    }
+}
+
+function renderTutorialStep() {
+    const step = TUTORIAL_STEPS[tutorialStep];
+    const total = TUTORIAL_STEPS.length;
+    const root = document.getElementById('tutorial-root');
+
+    document.getElementById('tutorial-step-counter').textContent =
+        `Шаг ${tutorialStep + 1} из ${total}`;
+    document.getElementById('tutorial-title').textContent = step.title;
+    document.getElementById('tutorial-text').textContent = step.text;
+
+    const backBtn = document.getElementById('tutorial-btn-back');
+    const nextBtn = document.getElementById('tutorial-btn-next');
+    backBtn.style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = tutorialStep === total - 1 ? 'Завершить ✓' : 'Далее →';
+
+    if (step.target) {
+        const el = document.querySelector(step.target);
+        if (el) {
+            root.classList.remove('dimmed');
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            setTimeout(() => {
+                if (!tutorialActive) return;
+                positionSpotlight(el);
+                positionCallout(el.getBoundingClientRect());
+            }, 350);
+            return;
+        }
+    }
+    // Нет цели или элемент не найден — центрируем с затемнением
+    root.classList.add('dimmed');
+    hideSpotlight();
+    centerCallout();
+}
+
+function positionSpotlight(el) {
+    const spotlight = document.getElementById('tutorial-spotlight');
+    const rect = el.getBoundingClientRect();
+    const pad = 6;
+    spotlight.style.display = 'block';
+    spotlight.style.top = (rect.top - pad) + 'px';
+    spotlight.style.left = (rect.left - pad) + 'px';
+    spotlight.style.width = (rect.width + pad * 2) + 'px';
+    spotlight.style.height = (rect.height + pad * 2) + 'px';
+}
+
+function hideSpotlight() {
+    document.getElementById('tutorial-spotlight').style.display = 'none';
+}
+
+function positionCallout(targetRect) {
+    const callout = document.getElementById('tutorial-callout');
+    callout.style.display = 'block';
+    callout.style.visibility = 'hidden';
+    const cw = callout.offsetWidth;
+    const ch = callout.offsetHeight;
+    callout.style.visibility = 'visible';
+
+    const margin = 16;
+    let top, left;
+
+    if (targetRect.bottom + ch + margin < window.innerHeight) {
+        top = targetRect.bottom + margin;
+    } else if (targetRect.top - ch - margin > 0) {
+        top = targetRect.top - ch - margin;
+    } else {
+        top = Math.max(margin, (window.innerHeight - ch) / 2);
+    }
+
+    left = targetRect.left + targetRect.width / 2 - cw / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - cw - margin));
+
+    callout.style.top = top + 'px';
+    callout.style.left = left + 'px';
+}
+
+function centerCallout() {
+    const callout = document.getElementById('tutorial-callout');
+    callout.style.display = 'block';
+    const cw = callout.offsetWidth;
+    const ch = callout.offsetHeight;
+    callout.style.top = Math.max(16, (window.innerHeight - ch) / 2) + 'px';
+    callout.style.left = Math.max(16, (window.innerWidth - cw) / 2) + 'px';
+}
+
+function nextTutorialStep() {
+    if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+        tutorialStep++;
+        renderTutorialStep();
+    } else {
+        endTutorial(true);
+    }
+}
+
+function prevTutorialStep() {
+    if (tutorialStep > 0) {
+        tutorialStep--;
+        renderTutorialStep();
+    }
+}
 // ===== Горячие клавиши =====
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (tutorialActive) return;    
     switch (e.code) {
         case 'Space':
             e.preventDefault(); // не даём странице прокрутиться
@@ -1085,4 +1257,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.Rating) window.Rating.setMode(currentMode);
     updateDailyPanel();
     startDailyTimer();    
+});
+// ===== Привязка туториала =====
+document.getElementById('btn-start-tutorial').addEventListener('click', startTutorial);
+document.getElementById('tutorial-btn-next').addEventListener('click', nextTutorialStep);
+document.getElementById('tutorial-btn-back').addEventListener('click', prevTutorialStep);
+document.getElementById('tutorial-btn-skip').addEventListener('click', () => endTutorial(true));
+
+window.addEventListener('resize', () => {
+    if (tutorialActive) renderTutorialStep();
+});
+
+document.addEventListener('keydown', (e) => {
+    if (!tutorialActive) return;
+    if (e.key === 'Escape') endTutorial(true);
+    else if (e.key === 'ArrowRight') nextTutorialStep();
+    else if (e.key === 'ArrowLeft') prevTutorialStep();
 });
