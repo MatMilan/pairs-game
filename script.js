@@ -1035,6 +1035,9 @@ let tutorialActive = false;
 let tutorialStep = 0;
 let tutorialSavedState = null;   // сохранённое состояние игры до демо
 let tutorialDemoActive = false;  // загружено ли сейчас демо-поле
+let tutorialClickIndex = 0;      // 0 — первая цифра пары, 1 — вторая
+let tutorialRenderedStep = -1;   // защита от сброса прогресса при resize
+let tutorialFeedbackTimer = null;
 
 const TUTORIAL_STEPS = [
     {
@@ -1082,43 +1085,35 @@ const TUTORIAL_STEPS = [
         title: '🏆 Онлайн-рейтинг',
         text: 'Соревнуйтесь с другими игроками! Выберите режим, войдите через Google и выиграйте — ваш результат попадёт в рейтинг. Есть вкладки: Сегодня, Вчера, За всё время и Архив.'
     },
-        {
+    {
         interactive: true,
         setupDemo: true,
         title: '🎮 Попробуйте сами!',
-        text: 'Я подготовил небольшое поле. Кликните на цифру 3, чтобы выбрать её.',
-        highlight: [{ r: 0, c: 0 }],
-        expectClick: { r: 0, c: 0 },
-        afterClick: 'select'
-    },
-    {
-        interactive: true,
-        title: '🔗 Теперь составьте пару',
-        text: 'Цифра 3 выбрана. Кликните на цифру 7 — вместе они дают 10, это пара!',
-        highlight: [{ r: 0, c: 1 }],
-        expectClick: { r: 0, c: 1 },
-        afterClick: 'removePair'
-    },
-    {
-        interactive: true,
-        title: '👍 Отлично! Ещё одна пара',
-        text: 'Пара 3 и 7 убрана. Теперь кликните на первую пятёрку.',
-        highlight: [{ r: 0, c: 2 }],
-        expectClick: { r: 0, c: 2 },
-        afterClick: 'select'
-    },
-    {
-        interactive: true,
-        title: '✨ Одинаковые цифры',
-        text: 'Кликните на вторую пятёрку. Две одинаковые цифры — тоже пара!',
+        text: '🧩 Убираем 3 и 7 — по вертикали. Кликните на подсвеченную жёлтым 3 в первой строке.',
         highlight: [{ r: 0, c: 3 }],
-        expectClick: { r: 0, c: 3 },
-        afterClick: 'removePair'
+        clicks: [{ r: 0, c: 3 }, { r: 1, c: 3 }],
+        afterFirstText: 'Теперь кликните на 7 прямо под ней. 3 + 7 = 10 — это пара, и по столбцу между ними ничего нет.'
+    },
+    {
+        interactive: true,
+        title: '🧩 Убираем 5 и 5 — по строке',
+        text: 'Кликните на левую пятёрку во второй строке.',
+        highlight: [{ r: 1, c: 2 }],
+        clicks: [{ r: 1, c: 2 }, { r: 1, c: 4 }],
+        afterFirstText: 'Теперь кликните на правую пятёрку. Мы уже убрали 7 между ними — путь свободен, и пара проходит!'
+    },
+    {
+        interactive: true,
+        title: '🌊 Убираем 6 и 4 — через край строки',
+        text: 'Кликните на 6 во второй строке (второй столбец).',
+        highlight: [{ r: 1, c: 1 }],
+        clicks: [{ r: 1, c: 1 }, { r: 2, c: 0 }],
+        afterFirstText: 'Теперь кликните на 4 в начале третьей строки. Справа от 6 все ячейки пусты: путь идёт вправо → за край второй строки ↩ и возвращается с левого края третьей прямо к 4.'
     },
     {
         target: '#btn-start',
         title: '🚀 Готово!',
-        text: 'Теперь вы знаете всё, что нужно. Нажмите «Старт» и удачи! Пройти обучение снова можно в блоке «Как играть».'
+        text: 'Отлично! Вы убрали три пары: по вертикали, по строке и через край. Теперь нажмите «Старт» и сыграйте по-настоящему. Повторить обучение можно в блоке «Как играть».'
     }
 ];
 
@@ -1130,10 +1125,16 @@ function startTutorial() {
 }
 
 function endTutorial(markCompleted) {
+    clearTimeout(tutorialFeedbackTimer);
     if (tutorialDemoActive) restoreTutorialDemo();
+
     tutorialActive = false;
+    tutorialClickIndex = 0;
+    tutorialRenderedStep = -1;
+
     document.getElementById('tutorial-root').style.display = 'none';
     highlightTutorialCells(null);
+
     if (markCompleted) {
         try { localStorage.setItem(TUTORIAL_KEY, 'true'); } catch (e) {}
     }
@@ -1143,22 +1144,26 @@ function renderTutorialStep() {
     const step = TUTORIAL_STEPS[tutorialStep];
     const total = TUTORIAL_STEPS.length;
     const root = document.getElementById('tutorial-root');
+    const backBtn = document.getElementById('tutorial-btn-back');
+    const nextBtn = document.getElementById('tutorial-btn-next');
+
+    clearTimeout(tutorialFeedbackTimer);
+
+    // Сбрасываем клик только при смене шага, не при resize
+    if (tutorialRenderedStep !== tutorialStep) {
+        tutorialClickIndex = 0;
+        tutorialRenderedStep = tutorialStep;
+    }
 
     document.getElementById('tutorial-step-counter').textContent =
         `Шаг ${tutorialStep + 1} из ${total}`;
     document.getElementById('tutorial-title').textContent = step.title;
     document.getElementById('tutorial-text').textContent = step.text;
+    document.getElementById('tutorial-text').classList.remove('tutorial-feedback');
 
-    const backBtn = document.getElementById('tutorial-btn-back');
-    const nextBtn = document.getElementById('tutorial-btn-next');
-
-    // Переход с демо-поля обратно к обычному шагу — восстановить игру
-    if (!step.interactive && tutorialDemoActive) {
-        restoreTutorialDemo();
-    }
+    if (!step.interactive && tutorialDemoActive) restoreTutorialDemo();
 
     if (step.interactive) {
-        // Интерактивный шаг: клики по полю разрешены, Далее/Назад скрыты
         root.classList.add('tutorial-interactive');
         root.classList.remove('dimmed');
         backBtn.style.display = 'none';
@@ -1166,35 +1171,38 @@ function renderTutorialStep() {
 
         if (step.setupDemo) setupTutorialDemo();
         hideSpotlight();
-        highlightTutorialCells(step.highlight);
+
+        const expected = step.clicks ? step.clicks[tutorialClickIndex] : step.highlight[0];
+        highlightTutorialCells(expected ? [expected] : null);
+        updateTutorialInteractiveText(step);
         positionCalloutForInteractive();
-    } else {
-        // Обычный шаг
-        root.classList.remove('tutorial-interactive');
-        backBtn.style.display = 'inline-block';
-        nextBtn.style.display = 'inline-block';
-        backBtn.style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
-        nextBtn.textContent = tutorialStep === total - 1 ? 'Завершить ✓' : 'Далее →';
-
-        highlightTutorialCells(null);
-
-        if (step.target) {
-            const el = document.querySelector(step.target);
-            if (el) {
-                root.classList.remove('dimmed');
-                el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                setTimeout(() => {
-                    if (!tutorialActive) return;
-                    positionSpotlight(el);
-                    positionCallout(el.getBoundingClientRect());
-                }, 350);
-                return;
-            }
-        }
-        root.classList.add('dimmed');
-        hideSpotlight();
-        centerCallout();
+        return;
     }
+
+    root.classList.remove('tutorial-interactive');
+    backBtn.style.display = 'inline-block';
+    nextBtn.style.display = 'inline-block';
+    backBtn.style.visibility = tutorialStep === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = tutorialStep === total - 1 ? 'Завершить ✓' : 'Далее →';
+    highlightTutorialCells(null);
+
+    if (step.target) {
+        const el = document.querySelector(step.target);
+        if (el) {
+            root.classList.remove('dimmed');
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            setTimeout(() => {
+                if (!tutorialActive) return;
+                positionSpotlight(el);
+                positionCallout(el.getBoundingClientRect());
+            }, 350);
+            return;
+        }
+    }
+
+    root.classList.add('dimmed');
+    hideSpotlight();
+    centerCallout();
 }
 
 function positionSpotlight(el) {
@@ -1270,37 +1278,72 @@ function prevTutorialStep() {
 function setupTutorialDemo() {
     if (tutorialDemoActive) return;
 
-    // Сохраняем текущее состояние игры
     tutorialSavedState = {
         board: JSON.parse(JSON.stringify(board)),
         isGameActive: isGameActive,
         selected: selected,
-        timerWasRunning: !!timerInterval
+        timerWasRunning: !!timerInterval,
+        wasPaused: isPaused
     };
+
     if (timerInterval) freezeTimer();
 
-    // Загружаем демо-поле: две пары в первой строке
+    // Если игра была на паузе — временно снимаем маскировку,
+    // чтобы демо-цифры были видны
+    if (isPaused) {
+        isPaused = false;
+        boardWrapper.classList.remove('paused');
+        pauseOverlay.classList.remove('visible');
+    }
+
     initBoard();
-    board[0][0] = 3;
-    board[0][1] = 7;
-    board[0][2] = 5;
-    board[0][3] = 5;
+
+    // 3 строки × 5 столбцов. Остальные столбцы намеренно пусты:
+    // именно это позволяет показать переход через край строки.
+    const demo = [
+        [2, 9, 8, 3, 1],
+        [9, 6, 5, 7, 5],
+        [4, 9, 2, 1, 8]
+    ];
+    for (let r = 0; r < demo.length; r++) {
+        for (let c = 0; c < demo[r].length; c++) {
+            board[r][c] = demo[r][c];
+        }
+    }
+
     isGameActive = true;
     selected = null;
+    tutorialClickIndex = 0;
     renderBoard();
-
     tutorialDemoActive = true;
 }
 
 function restoreTutorialDemo() {
     if (!tutorialDemoActive) return;
+
     if (tutorialSavedState) {
         board = tutorialSavedState.board;
         isGameActive = tutorialSavedState.isGameActive;
         selected = tutorialSavedState.selected;
-        if (tutorialSavedState.timerWasRunning && isGameActive) resumeTimer();
+
+        if (tutorialSavedState.wasPaused) {
+            isPaused = true;
+            boardWrapper.classList.add('paused');
+            pauseOverlay.classList.add('visible');
+            btnPause.innerHTML = '▶️ Дальше';
+        } else {
+            isPaused = false;
+            boardWrapper.classList.remove('paused');
+            pauseOverlay.classList.remove('visible');
+            btnPause.innerHTML = '⏸️ Пауза';
+            // startTimer продолжает накопленное время после freezeTimer
+            if (tutorialSavedState.timerWasRunning && isGameActive) startTimer();
+        }
         tutorialSavedState = null;
     }
+
+    tutorialClickIndex = 0;
+    tutorialRenderedStep = -1;
     highlightTutorialCells(null);
     renderBoard();
     tutorialDemoActive = false;
@@ -1317,26 +1360,52 @@ function highlightTutorialCells(cells) {
     }
 }
 
+function updateTutorialInteractiveText(step) {
+    const textEl = document.getElementById('tutorial-text');
+    if (!textEl || !step) return;
+
+    clearTimeout(tutorialFeedbackTimer);
+    textEl.classList.remove('tutorial-feedback');
+    textEl.textContent = (tutorialClickIndex === 1 && step.afterFirstText)
+        ? step.afterFirstText
+        : step.text;
+
+    const counter = document.getElementById('tutorial-step-counter');
+    if (counter) {
+        counter.textContent =
+            `Шаг ${tutorialStep + 1} из ${TUTORIAL_STEPS.length} · клик ${tutorialClickIndex + 1}/2`;
+    }
+}
+
 function handleTutorialClick(r, c) {
     if (!tutorialActive) return;
     const step = TUTORIAL_STEPS[tutorialStep];
-    if (!step || !step.interactive || !step.expectClick) return;
+    if (!step || !step.interactive || !step.clicks) return;
 
-    if (r === step.expectClick.r && c === step.expectClick.c) {
-        if (step.afterClick === 'select') {
-            selected = { r, c };
-            renderBoard();
-            advanceTutorial();
-        } else if (step.afterClick === 'removePair') {
-            if (selected) {
-                removePair(selected, { r, c });
-                selected = null;
-                renderBoard();
-                advanceTutorial();
-            }
-        }
+    initAudio();
+
+    const expected = step.clicks[tutorialClickIndex];
+    if (!expected || r !== expected.r || c !== expected.c) {
+        showTutorialFeedback('Кликните на ячейку с жёлтой пульсирующей рамкой 🙂');
+        return;
+    }
+
+    if (tutorialClickIndex === 0) {
+        // Первый клик — выбираем цифру
+        selected = { r, c };
+        tutorialClickIndex = 1;
+        playSound('select');
+        renderBoard();
+        highlightTutorialCells([step.clicks[1]]);
+        updateTutorialInteractiveText(step);
     } else {
-        showTutorialFeedback('Кликните на подсвеченную ячейку 🙂');
+        // Второй клик — реально убираем пару (звук и частицы встроенные)
+        if (selected) removePair(selected, { r, c });
+        selected = null;
+        tutorialClickIndex = 0;
+        renderBoard();
+        highlightTutorialCells(null);
+        advanceTutorial();
     }
 }
 
@@ -1351,14 +1420,20 @@ function advanceTutorial() {
 
 function showTutorialFeedback(msg) {
     const textEl = document.getElementById('tutorial-text');
-    const step = TUTORIAL_STEPS[tutorialStep];
+    const stepIndex = tutorialStep;
+
     textEl.textContent = msg;
     textEl.classList.add('tutorial-feedback');
-    setTimeout(() => {
-        if (!tutorialActive) return;
-        textEl.textContent = step.text;
+
+    clearTimeout(tutorialFeedbackTimer);
+    tutorialFeedbackTimer = setTimeout(() => {
+        if (!tutorialActive || tutorialStep !== stepIndex) return;
+        const s = TUTORIAL_STEPS[stepIndex];
+        textEl.textContent = (tutorialClickIndex === 1 && s.afterFirstText)
+            ? s.afterFirstText
+            : s.text;
         textEl.classList.remove('tutorial-feedback');
-    }, 1200);
+    }, 1600);
 }
 
 function positionCalloutForInteractive() {
