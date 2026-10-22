@@ -783,3 +783,86 @@ body {
     border-color: var(--accent1);
     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
 }
+/* ===== Панель «Челлендж дня» ===== */
+.daily-panel {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(240, 147, 251, 0.10));
+    border: 1px solid rgba(102, 126, 234, 0.35);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.daily-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.daily-icon {
+    font-size: 1.2rem;
+}
+
+.daily-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.daily-date {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.daily-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.daily-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #feca57;
+    box-shadow: 0 0 10px rgba(254, 202, 87, 0.7);
+    animation: daily-pulse 2s ease-in-out infinite;
+}
+
+.daily-status.played .daily-dot {
+    background: #4ade80;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.7);
+    animation: none;
+}
+
+@keyframes daily-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.5; transform: scale(0.85); }
+}
+
+.daily-timer-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+.daily-timer {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px;
+}
