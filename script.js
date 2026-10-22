@@ -12,6 +12,75 @@ let pendingRun = null; // победная партия, готовая к от�
 let gameSeed = 0;
 let gameMoves = [];
 let dailyAlreadyPlayed = false;
+// ===== Панель «Челлендж дня» =====
+let dailyTimerInterval = null;
+let lastDailyCheckDay = null;
+
+function updateDailyPanel() {
+    const today = getTodayString();
+    lastDailyCheckDay = today;
+
+    const dateEl = document.getElementById('daily-date');
+    if (dateEl) {
+        dateEl.textContent = new Date().toLocaleDateString('ru-RU');
+    }
+
+    // Проверяем, играли ли уже сегодня
+    if (window.Rating && window.Rating.checkDailyPlayed) {
+        window.Rating.checkDailyPlayed(today).then(played => {
+            dailyAlreadyPlayed = played;
+            renderDailyStatus(played);
+        }).catch(() => {
+            renderDailyStatus(dailyAlreadyPlayed);
+        });
+    } else {
+        renderDailyStatus(dailyAlreadyPlayed);
+    }
+}
+
+function renderDailyStatus(played) {
+    const statusEl = document.getElementById('daily-status');
+    const statusTextEl = document.querySelector('.daily-status-text');
+
+    if (statusEl) {
+        statusEl.classList.toggle('played', played);
+    }
+    if (statusTextEl) {
+        statusTextEl.textContent = played ? 'Сыграно ✓' : 'Не сыграно';
+    }
+}
+
+function startDailyTimer() {
+    if (dailyTimerInterval) clearInterval(dailyTimerInterval);
+
+    const timerEl = document.getElementById('daily-timer');
+    if (!timerEl) return;
+
+    function tick() {
+        const now = new Date();
+        const currentDay = getTodayString();
+
+        // Если день сменился — обновляем панель целиком
+        if (currentDay !== lastDailyCheckDay) {
+            updateDailyPanel();
+        }
+
+        // Следующая полночь
+        const midnight = new Date(now);
+        midnight.setHours(24, 0, 0, 0);
+
+        const diff = midnight - now;
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+
+        timerEl.textContent =
+            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    tick();
+    dailyTimerInterval = setInterval(tick, 1000);
+}
 
 async function checkDailyStatus() {
     if (activeMode !== 'daily') {
@@ -609,7 +678,8 @@ function endGame(win) {
         spawnConfetti();
         const tRec = saveRecord(activeMode, 'time', elapsed);
         const pRec = saveRecord(activeMode, 'pairs', pairsRemoved);
-        queueOnlineResult(elapsed); 
+        queueOnlineResult(elapsed);
+        updateDailyPanel();         
         let msg = `🎉 Победа! Пар: ${pairsRemoved} | Время: ${formatTime(elapsed)}`;
         if (tRec) msg += ' 🥇 Рекорд по времени!';
         if (pRec) msg += ' 🥇 Рекорд по парам!';
@@ -1013,4 +1083,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAllRecords();
     renderHintsLamps();
     if (window.Rating) window.Rating.setMode(currentMode);
+    updateDailyPanel();
+    startDailyTimer();    
 });
