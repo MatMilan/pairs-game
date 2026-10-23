@@ -1018,13 +1018,15 @@ function redrawGame() {
     if (filledCount < remainingDigits.length) {
         endGame(false);
     } else {
+        captureFlip();           // ← запомнить позиции ДО изменения
         board = newBoard;
         canUndo = false;
         selected = null;
         gameMoves.push({ type: 'redraw' });
         renderBoard();
+        playFlip();              // ← анимировать перемещение ПОСЛЕ перерисовки
         playSound('select');
-        updateStatus('Перерисовано: добавлены недостающие цифры');
+        updateStatus('Перерисовано: цифры сдвинуты');
     }
 }
 
@@ -1632,7 +1634,60 @@ function initDifficulty() {
 // ===== Кнопка отправки в онлайн-рейтинг =====
 const ratingSendBtn = document.getElementById('btn-rating-send');
 if (ratingSendBtn) ratingSendBtn.addEventListener('click', sendOnlineResult);
+// ===== Плавная анимация сдвига (FLIP) =====
+let flipCapture = null;
 
+function captureFlip() {
+    flipCapture = [];
+    const tds = table.querySelectorAll('td');
+    tds.forEach(td => {
+        const val = td.textContent.trim();
+        const num = parseInt(val, 10);
+        if (val && val !== '*' && !isNaN(num)) {
+            flipCapture.push({ value: num, rect: td.getBoundingClientRect() });
+        }
+    });
+}
+
+function playFlip() {
+    if (!flipCapture) return;
+    const old = flipCapture;
+    flipCapture = null;
+
+    const tds = Array.from(table.querySelectorAll('td'));
+    const used = new Array(old.length).fill(false);
+
+    tds.forEach(td => {
+        const val = td.textContent.trim();
+        const num = parseInt(val, 10);
+        if (!val || val === '*' || isNaN(num)) return;
+
+        // Ищем неиспользованную старую позицию с тем же значением
+        let idx = -1;
+        for (let i = 0; i < old.length; i++) {
+            if (!used[i] && old[i].value === num) { idx = i; break; }
+        }
+        if (idx === -1) return;
+        used[idx] = true;
+
+        const oldRect = old[idx].rect;
+        const newRect = td.getBoundingClientRect();
+        const dx = oldRect.left - newRect.left;
+        const dy = oldRect.top - newRect.top;
+        if (dx === 0 && dy === 0) return;
+
+        td.style.transition = 'none';
+        td.style.transform = `translate(${dx}px, ${dy}px)`;
+        void td.offsetWidth; // форсировать reflow
+        td.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        td.style.transform = 'translate(0, 0)';
+
+        setTimeout(() => {
+            td.style.transition = '';
+            td.style.transform = '';
+        }, 450);
+    });
+}
 // ===== Инициализация =====
 document.addEventListener('DOMContentLoaded', () => {
     initBoard();
