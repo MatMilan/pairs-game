@@ -962,6 +962,12 @@ function applyTheme(name) {
     document.querySelectorAll('.theme-btn').forEach(b => {
         b.classList.toggle('active', b.dataset.theme === name);
     });
+
+    // Управление анимированным фоном «Матрицы»
+    if (typeof window.startMatrix === 'function' && typeof window.stopMatrix === 'function') {
+        if (name === 'matrix') window.startMatrix();
+        else window.stopMatrix();
+    }
 }
 function initThemes() {
     let saved = 'cosmos';
