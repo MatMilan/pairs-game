@@ -1647,22 +1647,24 @@ function captureFlip() {
             flipCapture.push({ value: num, rect: td.getBoundingClientRect() });
         }
     });
+    console.log('[FLIP] захвачено цифр: ' + flipCapture.length);
 }
 
 function playFlip() {
-    if (!flipCapture) return;
+    if (!flipCapture) { console.log('[FLIP] нет захвата — playFlip без captureFlip'); return; }
     const old = flipCapture;
     flipCapture = null;
 
     const tds = Array.from(table.querySelectorAll('td'));
     const used = new Array(old.length).fill(false);
+    let movedCount = 0;
+    let maxDelta = 0;
 
     tds.forEach(td => {
         const val = td.textContent.trim();
         const num = parseInt(val, 10);
         if (!val || val === '*' || isNaN(num)) return;
 
-        // Ищем неиспользованную старую позицию с тем же значением
         let idx = -1;
         for (let i = 0; i < old.length; i++) {
             if (!used[i] && old[i].value === num) { idx = i; break; }
@@ -1674,19 +1676,28 @@ function playFlip() {
         const newRect = td.getBoundingClientRect();
         const dx = oldRect.left - newRect.left;
         const dy = oldRect.top - newRect.top;
-        if (dx === 0 && dy === 0) return;
+        const dist = Math.hypot(dx, dy);
+        if (dist > maxDelta) maxDelta = dist;
+        if (dist < 1) return; // ячейка не сдвинулась
 
+        movedCount++;
         td.style.transition = 'none';
-        td.style.transform = `translate(${dx}px, ${dy}px)`;
+        td.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+        td.style.zIndex = '5';
+        td.style.boxShadow = '0 0 18px rgba(102,126,234,0.8)';
         void td.offsetWidth; // форсировать reflow
-        td.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-        td.style.transform = 'translate(0, 0)';
-
+        td.style.transition = 'transform 0.5s cubic-bezier(0.22, 0.9, 0.3, 1), box-shadow 0.5s';
+        td.style.transform = 'translate(0, 0) scale(1)';
+        td.style.boxShadow = '';
         setTimeout(() => {
             td.style.transition = '';
             td.style.transform = '';
-        }, 450);
+            td.style.zIndex = '';
+            td.style.boxShadow = '';
+        }, 550);
     });
+
+    console.log('[FLIP] сдвиг: анимировано ' + movedCount + ' ячеек, макс. смещение ' + maxDelta.toFixed(0) + 'px');
 }
 // ===== Инициализация =====
 document.addEventListener('DOMContentLoaded', () => {
