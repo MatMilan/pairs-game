@@ -983,3 +983,110 @@ body {
     color: #ffd93d;
     font-weight: 600;
 }
+/* ===== Киберпанк ===== */
+[data-theme="cyber"] {
+    --bg: linear-gradient(135deg, #0d0221 0%, #1a0533 50%, #240046 100%);
+    --panel-bg: rgba(255, 42, 109, 0.06);
+    --panel-border: rgba(5, 217, 232, 0.3);
+    --text-main: #d1f7ff;
+    --text-dim: rgba(209, 247, 255, 0.5);
+    --accent1: #ff2a6d; --accent2: #05d9e8; --accent3: #d1f7ff;
+    --title-grad: linear-gradient(135deg, #ff2a6d, #05d9e8, #d1f7ff);
+    --cell-bg: rgba(5, 217, 232, 0.07);
+    --cell-hover: rgba(5, 217, 232, 0.15);
+    --cell-empty: rgba(5, 217, 232, 0.02);
+    --cell-star-bg: rgba(5, 217, 232, 0.02);
+    --cell-star-color: rgba(5, 217, 232, 0.2);
+    --btn-sec-bg: rgba(255, 42, 109, 0.08);
+    --btn-sec-border: rgba(255, 42, 109, 0.3);
+    --btn-sec-hover: rgba(255, 42, 109, 0.16);
+    --status-bg: rgba(5, 217, 232, 0.06);
+    --board-bg: rgba(13, 2, 33, 0.5);
+    --digit-19: #ff2a6d; --digit-28: #f9f871; --digit-37: #00ff9f;
+    --digit-46: #05d9e8; --digit-5: #b967ff;
+}
+
+/* ===== Лес ===== */
+[data-theme="forest"] {
+    --bg: linear-gradient(135deg, #0b2e13 0%, #1b4332 50%, #2d6a4f 100%);
+    --panel-bg: rgba(144, 238, 144, 0.06);
+    --panel-border: rgba(144, 238, 144, 0.2);
+    --text-main: #e9f5db;
+    --text-dim: rgba(233, 245, 219, 0.5);
+    --accent1: #52b788; --accent2: #74c69d; --accent3: #b7e4c7;
+    --title-grad: linear-gradient(135deg, #74c69d, #b7e4c7, #d8f3dc);
+    --cell-bg: rgba(183, 228, 199, 0.07);
+    --cell-hover: rgba(183, 228, 199, 0.14);
+    --cell-empty: rgba(183, 228, 199, 0.02);
+    --cell-star-bg: rgba(183, 228, 199, 0.02);
+    --cell-star-color: rgba(183, 228, 199, 0.2);
+    --btn-sec-bg: rgba(82, 183, 136, 0.1);
+    --btn-sec-border: rgba(82, 183, 136, 0.3);
+    --btn-sec-hover: rgba(82, 183, 136, 0.18);
+    --status-bg: rgba(27, 67, 50, 0.4);
+    --board-bg: rgba(11, 46, 19, 0.5);
+    --digit-19: #ff8fab; --digit-28: #ffd166; --digit-37: #95d5b2;
+    --digit-46: #8ecae6; --digit-5: #cdb4db;
+}
+
+/* ===== Ретро (синтвейв) ===== */
+[data-theme="retro"] {
+    --bg: linear-gradient(180deg, #2b1055 0%, #7597de 100%);
+    --panel-bg: rgba(255, 110, 199, 0.06);
+    --panel-border: rgba(255, 110, 199, 0.3);
+    --text-main: #ffecf5;
+    --text-dim: rgba(255, 236, 245, 0.5);
+    --accent1: #ff6ec7; --accent2: #ffa500; --accent3: #7b2ff7;
+    --title-grad: linear-gradient(135deg, #ff6ec7, #ffa500, #7b2ff7);
+    --cell-bg: rgba(255, 110, 199, 0.08);
+    --cell-hover: rgba(255, 110, 199, 0.16);
+    --cell-empty: rgba(255, 110, 199, 0.02);
+    --cell-star-bg: rgba(255, 110, 199, 0.02);
+    --cell-star-color: rgba(255, 110, 199, 0.2);
+    --btn-sec-bg: rgba(123, 47, 247, 0.1);
+    --btn-sec-border: rgba(123, 47, 247, 0.3);
+    --btn-sec-hover: rgba(123, 47, 247, 0.18);
+    --status-bg: rgba(43, 16, 85, 0.4);
+    --board-bg: rgba(43, 16, 85, 0.5);
+    --digit-19: #ff6ec7; --digit-28: #ffa500; --digit-37: #39ff14;
+    --digit-46: #00e5ff; --digit-5: #b388ff;
+}
+
+/* ===== Матрица ===== */
+[data-theme="matrix"] {
+    --bg: #000000;
+    --panel-bg: rgba(0, 255, 65, 0.05);
+    --panel-border: rgba(0, 255, 65, 0.3);
+    --text-main: #00ff41;
+    --text-dim: rgba(0, 255, 65, 0.5);
+    --accent1: #00ff41; --accent2: #008f11; --accent3: #003b00;
+    --title-grad: linear-gradient(135deg, #00ff41, #008f11);
+    --cell-bg: rgba(0, 255, 65, 0.06);
+    --cell-hover: rgba(0, 255, 65, 0.14);
+    --cell-empty: rgba(0, 255, 65, 0.02);
+    --cell-star-bg: rgba(0, 255, 65, 0.02);
+    --cell-star-color: rgba(0, 255, 65, 0.2);
+    --btn-sec-bg: rgba(0, 143, 17, 0.1);
+    --btn-sec-border: rgba(0, 143, 17, 0.3);
+    --btn-sec-hover: rgba(0, 143, 17, 0.2);
+    --status-bg: rgba(0, 59, 0, 0.4);
+    --board-bg: rgba(0, 0, 0, 0.6);
+    --digit-19: #00ff41; --digit-28: #39ff14; --digit-37: #7fff00;
+    --digit-46: #00e676; --digit-5: #b9f6ca;
+}
+
+/* ===== Матричный фон (canvas) ===== */
+#matrix-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    display: none;
+}
+body[data-theme="matrix"] #matrix-bg { display: block; }
+
+/* Контент поверх канваса */
+.game-layout {
+    position: relative;
+    z-index: 1;
+}
