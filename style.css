@@ -1083,7 +1083,7 @@ body {
     pointer-events: none;
     display: none;
 }
-body[data-theme="matrix"] #matrix-bg { display: block; }
+:root[data-theme="matrix"] #matrix-bg { display: block; }
 
 /* Контент поверх канваса */
 .game-layout {
