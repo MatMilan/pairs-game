@@ -203,19 +203,11 @@ function digitGroupClass(v) {
     return '';
 }
 
-// ===== Звук =====
-function initAudio() {
-    if (!audioCtx) {
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-        catch (e) { console.warn('Web Audio API не поддерживается'); }
-    }
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-}
+// ===== Звуковые пакеты =====
+let currentSoundPack = 'standard';
 
-function playSound(type) {
-    if (!soundEnabled || !audioCtx) return;
-    const now = audioCtx.currentTime;
-    const tones = {
+const SOUND_PACKS = {
+    standard: {
         select: [{ f: 600, d: 0.08, v: 0.15 }],
         pair: [
             { f: 523, d: 0.1, v: 0.2, t: 0 },
@@ -236,43 +228,169 @@ function playSound(type) {
             { f: 1109, d: 0.15, v: 0.2, t: 0.16 },
             { f: 1319, d: 0.2, v: 0.2, t: 0.24 }
         ],
-    win: [
-        // восходящая фанфара
-        { f: 523.25, d: 0.15, v: 0.22, t: 0 },     // C5
-        { f: 659.25, d: 0.15, v: 0.22, t: 0.15 },  // E5
-        { f: 783.99, d: 0.15, v: 0.22, t: 0.30 },  // G5
-        { f: 1046.5, d: 0.35, v: 0.26, t: 0.45 },  // C6
-        // торжественный аккорд до-мажор с басом
-        { f: 261.63, d: 1.10, v: 0.14, t: 0.85 },  // C4 (бас)
-        { f: 1046.5, d: 1.00, v: 0.15, t: 0.85 },  // C6
-        { f: 1318.5, d: 1.00, v: 0.13, t: 0.85 },  // E6
-        { f: 1568.0, d: 1.00, v: 0.13, t: 0.85 },  // G6
-        { f: 2093.0, d: 0.70, v: 0.09, t: 1.15 }   // C7 (искра)
-    ],
-    lose: [
-        // нисходящая трагическая фраза
-        { f: 440.00, d: 0.26, v: 0.20, t: 0 },     // A4
-        { f: 415.30, d: 0.26, v: 0.20, t: 0.27 },  // G#4
-        { f: 392.00, d: 0.26, v: 0.20, t: 0.54 },  // G4
-        { f: 369.99, d: 0.42, v: 0.22, t: 0.81 },  // F#4
-        // протяжный минорный аккорд (ля-минор) с глубоким басом
-        { f: 110.00, d: 1.60, v: 0.16, t: 1.30 },  // A2 (глубокий дрон)
-        { f: 220.00, d: 1.40, v: 0.16, t: 1.30 },  // A3
-        { f: 261.63, d: 1.40, v: 0.13, t: 1.30 },  // C4
-        { f: 329.63, d: 1.40, v: 0.13, t: 1.30 }   // E4
-    ]
-    };
-    const seq = tones[type];
+        win: [
+            // восходящая фанфара
+            { f: 523.25, d: 0.15, v: 0.22, t: 0 },     // C5
+            { f: 659.25, d: 0.15, v: 0.22, t: 0.15 },  // E5
+            { f: 783.99, d: 0.15, v: 0.22, t: 0.30 },  // G5
+            { f: 1046.5, d: 0.35, v: 0.26, t: 0.45 },  // C6
+            // торжественный аккорд до-мажор с басом
+            { f: 261.63, d: 1.10, v: 0.14, t: 0.85 },  // C4 (бас)
+            { f: 1046.5, d: 1.00, v: 0.15, t: 0.85 },  // C6
+            { f: 1318.5, d: 1.00, v: 0.13, t: 0.85 },  // E6
+            { f: 1568.0, d: 1.00, v: 0.13, t: 0.85 },  // G6
+            { f: 2093.0, d: 0.70, v: 0.09, t: 1.15 }   // C7 (искра)
+        ],
+        lose: [
+            // нисходящая трагическая фраза
+            { f: 440.00, d: 0.26, v: 0.20, t: 0 },     // A4
+            { f: 415.30, d: 0.26, v: 0.20, t: 0.27 },  // G#4
+            { f: 392.00, d: 0.26, v: 0.20, t: 0.54 },  // G4
+            { f: 369.99, d: 0.42, v: 0.22, t: 0.81 },  // F#4
+            // протяжный минорный аккорд (ля-минор) с глубоким басом
+            { f: 110.00, d: 1.60, v: 0.16, t: 1.30 },  // A2 (глубокий дрон)
+            { f: 220.00, d: 1.40, v: 0.16, t: 1.30 },  // A3
+            { f: 261.63, d: 1.40, v: 0.13, t: 1.30 },  // C4
+            { f: 329.63, d: 1.40, v: 0.13, t: 1.30 }   // E4
+        ]
+    },        
+
+    chiptune: {
+        select: [{ f: 880, d: 0.05, wave: 'square', v: 0.12 }],
+        pair: [
+            { f: 523, d: 0.06, wave: 'square', v: 0.12, t: 0 },
+            { f: 659, d: 0.06, wave: 'square', v: 0.12, t: 0.06 },
+            { f: 784, d: 0.06, wave: 'square', v: 0.12, t: 0.12 },
+            { f: 1047, d: 0.10, wave: 'square', v: 0.14, t: 0.18 }
+        ],
+        error: [
+            { f: 220, d: 0.08, wave: 'square', v: 0.12, t: 0 },
+            { f: 155, d: 0.12, wave: 'square', v: 0.12, t: 0.08 }
+        ],
+        hint: [
+            { f: 988, d: 0.05, wave: 'square', v: 0.12, t: 0 },
+            { f: 1319, d: 0.08, wave: 'square', v: 0.12, t: 0.05 }
+        ],
+        win: [
+            { f: 523, d: 0.08, wave: 'square', v: 0.12, t: 0 },
+            { f: 659, d: 0.08, wave: 'square', v: 0.12, t: 0.08 },
+            { f: 784, d: 0.08, wave: 'square', v: 0.12, t: 0.16 },
+            { f: 1047, d: 0.08, wave: 'square', v: 0.14, t: 0.24 },
+            { f: 1319, d: 0.12, wave: 'square', v: 0.14, t: 0.32 },
+            { f: 1568, d: 0.20, wave: 'square', v: 0.14, t: 0.44 }
+        ],
+        lose: [
+            { f: 392, d: 0.10, wave: 'square', v: 0.12, t: 0 },
+            { f: 349, d: 0.10, wave: 'square', v: 0.12, t: 0.10 },
+            { f: 311, d: 0.10, wave: 'square', v: 0.12, t: 0.20 },
+            { f: 233, d: 0.25, wave: 'square', v: 0.12, t: 0.30 }
+        ],
+        bonus: [
+            { f: 659, d: 0.06, wave: 'square', v: 0.12, t: 0 },
+            { f: 880, d: 0.06, wave: 'square', v: 0.12, t: 0.06 },
+            { f: 1109, d: 0.08, wave: 'square', v: 0.14, t: 0.12 }
+        ]
+    },
+
+    orchestral: {
+        select: [{ f: 660, d: 0.15, wave: 'triangle', v: 0.15, attack: 0.02 }],
+        pair: [
+            { f: 523, d: 0.3, wave: 'triangle', v: 0.15, t: 0, attack: 0.02 },
+            { f: 659, d: 0.3, wave: 'triangle', v: 0.15, t: 0.05, attack: 0.02 },
+            { f: 784, d: 0.4, wave: 'triangle', v: 0.15, t: 0.1, attack: 0.02 }
+        ],
+        error: [
+            { f: 220, d: 0.4, wave: 'sine', v: 0.15, t: 0, attack: 0.02 },
+            { f: 185, d: 0.5, wave: 'sine', v: 0.15, t: 0.1, attack: 0.02 }
+        ],
+        hint: [
+            { f: 880, d: 0.25, wave: 'triangle', v: 0.12, t: 0, attack: 0.02 },
+            { f: 1109, d: 0.3, wave: 'triangle', v: 0.12, t: 0.08, attack: 0.02 }
+        ],
+        win: [
+            { f: 523, d: 0.8, wave: 'triangle', v: 0.12, t: 0, attack: 0.03 },
+            { f: 659, d: 0.8, wave: 'triangle', v: 0.12, t: 0, attack: 0.03 },
+            { f: 784, d: 0.8, wave: 'triangle', v: 0.12, t: 0, attack: 0.03 },
+            { f: 1047, d: 1.0, wave: 'sine', v: 0.1, t: 0.3, attack: 0.05 },
+            { f: 1319, d: 1.0, wave: 'sine', v: 0.08, t: 0.4, attack: 0.05 }
+        ],
+        lose: [
+            { f: 220, d: 0.6, wave: 'sine', v: 0.15, t: 0, attack: 0.03 },
+            { f: 196, d: 0.6, wave: 'sine', v: 0.15, t: 0.2, attack: 0.03 },
+            { f: 165, d: 0.8, wave: 'sine', v: 0.15, t: 0.4, attack: 0.03 },
+            { f: 110, d: 1.2, wave: 'sine', v: 0.12, t: 0.6, attack: 0.05 }
+        ],
+        bonus: [
+            { f: 587, d: 0.25, wave: 'triangle', v: 0.12, t: 0, attack: 0.02 },
+            { f: 740, d: 0.25, wave: 'triangle', v: 0.12, t: 0.08, attack: 0.02 },
+            { f: 880, d: 0.35, wave: 'triangle', v: 0.12, t: 0.16, attack: 0.02 }
+        ]
+    },
+
+    asmr: {
+        select: [{ f: 440, d: 0.3, wave: 'sine', v: 0.04, attack: 0.1 }],
+        pair: [
+            { f: 392, d: 0.5, wave: 'sine', v: 0.04, t: 0, attack: 0.15 },
+            { f: 494, d: 0.5, wave: 'sine', v: 0.04, t: 0.1, attack: 0.15 },
+            { f: 587, d: 0.6, wave: 'sine', v: 0.04, t: 0.2, attack: 0.15 }
+        ],
+        error: [{ f: 196, d: 0.6, wave: 'sine', v: 0.04, t: 0, attack: 0.15 }],
+        hint: [
+            { f: 660, d: 0.4, wave: 'sine', v: 0.03, t: 0, attack: 0.12 },
+            { f: 830, d: 0.5, wave: 'sine', v: 0.03, t: 0.1, attack: 0.12 }
+        ],
+        win: [
+            { f: 392, d: 1.2, wave: 'sine', v: 0.04, t: 0, attack: 0.2 },
+            { f: 494, d: 1.2, wave: 'sine', v: 0.04, t: 0.15, attack: 0.2 },
+            { f: 587, d: 1.2, wave: 'sine', v: 0.04, t: 0.3, attack: 0.2 },
+            { f: 784, d: 1.5, wave: 'sine', v: 0.04, t: 0.45, attack: 0.3 }
+        ],
+        lose: [
+            { f: 294, d: 1.0, wave: 'sine', v: 0.04, t: 0, attack: 0.2 },
+            { f: 247, d: 1.2, wave: 'sine', v: 0.04, t: 0.3, attack: 0.2 },
+            { f: 196, d: 1.5, wave: 'sine', v: 0.04, t: 0.6, attack: 0.3 }
+        ],
+        bonus: [
+            { f: 523, d: 0.5, wave: 'sine', v: 0.03, t: 0, attack: 0.15 },
+            { f: 659, d: 0.6, wave: 'sine', v: 0.03, t: 0.1, attack: 0.15 }
+        ]
+    }
+};
+
+// Загрузка сохранённого пакета
+try {
+    const savedPack = localStorage.getItem('soundPack');
+    if (savedPack && SOUND_PACKS[savedPack]) currentSoundPack = savedPack;
+} catch (e) {}
+function initAudio() {
+    if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { console.warn('Web Audio API не поддерживается'); }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playSound(type) {
+    if (!soundEnabled || !audioCtx) return;
+
+    const now = audioCtx.currentTime;
+    const pack = SOUND_PACKS[currentSoundPack] || SOUND_PACKS.standard;
+    const seq = pack[type] || (SOUND_PACKS.standard ? SOUND_PACKS.standard[type] : null);
     if (!seq) return;
+
     seq.forEach(n => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc.type = 'sine';
+        osc.type = n.wave || 'sine';
         osc.frequency.value = n.f;
+
         const start = now + (n.t || 0);
+        const attack = n.attack || 0.01;
+
         gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(n.v, start + 0.01);
+        gain.gain.linearRampToValueAtTime(n.v, start + attack);
         gain.gain.exponentialRampToValueAtTime(0.001, start + n.d);
+
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(start);
@@ -1532,7 +1650,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 startTutorial();
             }
         } catch (e) {}
-    }, 800);    
+    }, 800);
+    // ===== Переключатель звуковых пакетов =====
+    const soundPackSelect = document.getElementById('sound-pack-select');
+    if (soundPackSelect) {
+        soundPackSelect.value = currentSoundPack;
+        soundPackSelect.addEventListener('change', (e) => {
+            currentSoundPack = e.target.value;
+            try { localStorage.setItem('soundPack', currentSoundPack); } catch (err) {}
+            initAudio();
+            playSound('pair'); // тестовый звук при переключении
+        });
+    }
 });
 // ===== Привязка туториала (делегирование событий) =====
 document.getElementById('btn-start-tutorial').addEventListener('click', startTutorial);
