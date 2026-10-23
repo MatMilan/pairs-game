@@ -1634,70 +1634,96 @@ function initDifficulty() {
 // ===== Кнопка отправки в онлайн-рейтинг =====
 const ratingSendBtn = document.getElementById('btn-rating-send');
 if (ratingSendBtn) ratingSendBtn.addEventListener('click', sendOnlineResult);
-// ===== Плавная анимация сдвига (FLIP) =====
+// ===== Плавная анимация сдвига: копии вылетают из оригиналов =====
 let flipCapture = null;
 
 function captureFlip() {
     flipCapture = [];
     const tds = table.querySelectorAll('td');
-    tds.forEach(td => {
+    tds.forEach((td, index) => {
         const val = td.textContent.trim();
         const num = parseInt(val, 10);
         if (val && val !== '*' && !isNaN(num)) {
-            flipCapture.push({ value: num, rect: td.getBoundingClientRect() });
+            flipCapture.push({
+                value: num,
+                rect: td.getBoundingClientRect(),
+                idx: index  // индекс в таблице = r * COLS + c
+            });
         }
     });
-    console.log('[FLIP] захвачено цифр: ' + flipCapture.length);
+    console.log('[FLIP] захвачено оригиналов: ' + flipCapture.length);
 }
 
 function playFlip() {
-    if (!flipCapture) { console.log('[FLIP] нет захвата — playFlip без captureFlip'); return; }
+    if (!flipCapture) return;
     const old = flipCapture;
     flipCapture = null;
 
-    const tds = Array.from(table.querySelectorAll('td'));
-    const used = new Array(old.length).fill(false);
-    let movedCount = 0;
-    let maxDelta = 0;
+    // Быстрый доступ к старому захвату по индексу ячейки
+    const oldByIdx = new Map();
+    old.forEach(o => oldByIdx.set(o.idx, o));
 
-    tds.forEach(td => {
+    // Источники по значению — для поиска «откуда» летит копия
+    const sourcesByValue = {};
+    old.forEach(o => {
+        if (!sourcesByValue[o.value]) sourcesByValue[o.value] = [];
+        sourcesByValue[o.value].push(o);
+    });
+    const usedSources = new Set();
+
+    const tds = Array.from(table.querySelectorAll('td'));
+    let copiesCount = 0;
+
+    tds.forEach((td, index) => {
         const val = td.textContent.trim();
         const num = parseInt(val, 10);
         if (!val || val === '*' || isNaN(num)) return;
 
-        let idx = -1;
-        for (let i = 0; i < old.length; i++) {
-            if (!used[i] && old[i].value === num) { idx = i; break; }
+        const oldEntry = oldByIdx.get(index);
+        if (oldEntry && oldEntry.value === num) {
+            // Это оригинал, он остался на месте — не трогаем
+            return;
         }
-        if (idx === -1) return;
-        used[idx] = true;
 
-        const oldRect = old[idx].rect;
+        // Новая копия — ищем оригинал с той же цифрой
+        const sources = sourcesByValue[num];
+        if (!sources) return;
+        const source = sources.find(s => !usedSources.has(s));
+        if (!source) return;
+        usedSources.add(source);
+
+        copiesCount++;
+
+        const oldRect = source.rect;
         const newRect = td.getBoundingClientRect();
         const dx = oldRect.left - newRect.left;
         const dy = oldRect.top - newRect.top;
-        const dist = Math.hypot(dx, dy);
-        if (dist > maxDelta) maxDelta = dist;
-        if (dist < 1) return; // ячейка не сдвинулась
+        if (Math.hypot(dx, dy) < 1) return;
 
-        movedCount++;
+        // Стартуем из позиции оригинала, «рождаясь» из него
         td.style.transition = 'none';
-        td.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+        td.style.transform = `translate(${dx}px, ${dy}px) scale(0.4)`;
+        td.style.opacity = '0';
         td.style.zIndex = '5';
-        td.style.boxShadow = '0 0 18px rgba(102,126,234,0.8)';
-        void td.offsetWidth; // форсировать reflow
-        td.style.transition = 'transform 0.5s cubic-bezier(0.22, 0.9, 0.3, 1), box-shadow 0.5s';
+        td.style.boxShadow = '0 0 22px rgba(102,126,234,0.9)';
+        void td.offsetWidth;
+        td.style.transition =
+            'transform 0.6s cubic-bezier(0.22, 0.9, 0.3, 1), ' +
+            'opacity 0.5s ease-out, ' +
+            'box-shadow 0.6s ease-out';
         td.style.transform = 'translate(0, 0) scale(1)';
+        td.style.opacity = '1';
         td.style.boxShadow = '';
         setTimeout(() => {
             td.style.transition = '';
             td.style.transform = '';
             td.style.zIndex = '';
+            td.style.opacity = '';
             td.style.boxShadow = '';
-        }, 550);
+        }, 650);
     });
 
-    console.log('[FLIP] сдвиг: анимировано ' + movedCount + ' ячеек, макс. смещение ' + maxDelta.toFixed(0) + 'px');
+    console.log('[FLIP] клонов, вылетевших из оригиналов: ' + copiesCount);
 }
 // ===== Инициализация =====
 document.addEventListener('DOMContentLoaded', () => {
