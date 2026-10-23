@@ -1670,6 +1670,7 @@ function playFlip() {
         sourcesByValue[o.value].push(o);
     });
     const usedSources = new Set();
+    const reactedSources = new Set(); // оригиналы, которые уже отреагировали
 
     const tds = Array.from(table.querySelectorAll('td'));
     let copiesCount = 0;
@@ -1681,7 +1682,7 @@ function playFlip() {
 
         const oldEntry = oldByIdx.get(index);
         if (oldEntry && oldEntry.value === num) {
-            // Это оригинал, он остался на месте — не трогаем
+            // Это оригинал, он остался на месте — обработаем позже
             return;
         }
 
@@ -1698,32 +1699,59 @@ function playFlip() {
         const newRect = td.getBoundingClientRect();
         const dx = oldRect.left - newRect.left;
         const dy = oldRect.top - newRect.top;
-        if (Math.hypot(dx, dy) < 1) return;
 
-        // Стартуем из позиции оригинала, «рождаясь» из него
-        td.style.transition = 'none';
-        td.style.transform = `translate(${dx}px, ${dy}px) scale(0.4)`;
-        td.style.opacity = '0';
-        td.style.zIndex = '5';
-        td.style.boxShadow = '0 0 22px rgba(102,126,234,0.9)';
-        void td.offsetWidth;
-        td.style.transition =
-            'transform 0.6s cubic-bezier(0.22, 0.9, 0.3, 1), ' +
-            'opacity 0.5s ease-out, ' +
-            'box-shadow 0.6s ease-out';
-        td.style.transform = 'translate(0, 0) scale(1)';
-        td.style.opacity = '1';
-        td.style.boxShadow = '';
-        setTimeout(() => {
-            td.style.transition = '';
-            td.style.transform = '';
-            td.style.zIndex = '';
-            td.style.opacity = '';
+        // Анимация копии: вылетает из оригинала
+        if (Math.hypot(dx, dy) >= 1) {
+            td.style.transition = 'none';
+            td.style.transform = `translate(${dx}px, ${dy}px) scale(0.4)`;
+            td.style.opacity = '0';
+            td.style.zIndex = '5';
+            td.style.boxShadow = '0 0 22px rgba(102,126,234,0.9)';
+            void td.offsetWidth;
+            td.style.transition =
+                'transform 0.6s cubic-bezier(0.22, 0.9, 0.3, 1), ' +
+                'opacity 0.5s ease-out, ' +
+                'box-shadow 0.6s ease-out';
+            td.style.transform = 'translate(0, 0) scale(1)';
+            td.style.opacity = '1';
             td.style.boxShadow = '';
-        }, 650);
+            setTimeout(() => {
+                td.style.transition = '';
+                td.style.transform = '';
+                td.style.zIndex = '';
+                td.style.opacity = '';
+                td.style.boxShadow = '';
+            }, 650);
+        }
+
+        // Анимация оригинала: реакция на "отдачу" копии
+        if (!reactedSources.has(source)) {
+            reactedSources.add(source);
+            const sourceCell = tds[source.idx];
+            if (sourceCell) {
+                // Направление "отталкивания" — противоположно направлению полёта клона
+                const pushDx = dx !== 0 ? -Math.sign(dx) * 3 : 0;
+                const pushDy = dy !== 0 ? -Math.sign(dy) * 3 : 0;
+
+                sourceCell.style.transition = 'none';
+                sourceCell.style.transform = `translate(${pushDx}px, ${pushDy}px) scale(0.85)`;
+                sourceCell.style.boxShadow = '0 0 20px rgba(102,126,234,0.95)';
+                void sourceCell.offsetWidth;
+                sourceCell.style.transition =
+                    'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), ' +
+                    'box-shadow 0.4s ease-out';
+                sourceCell.style.transform = 'translate(0, 0) scale(1)';
+                sourceCell.style.boxShadow = '';
+                setTimeout(() => {
+                    sourceCell.style.transition = '';
+                    sourceCell.style.transform = '';
+                    sourceCell.style.boxShadow = '';
+                }, 500);
+            }
+        }
     });
 
-    console.log('[FLIP] клонов, вылетевших из оригиналов: ' + copiesCount);
+    console.log('[FLIP] клонов: ' + copiesCount + ', оригиналов отреагировало: ' + reactedSources.size);
 }
 // ===== Инициализация =====
 document.addEventListener('DOMContentLoaded', () => {
