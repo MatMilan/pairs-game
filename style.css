@@ -1075,15 +1075,198 @@ body {
     --digit-46: #00e676; --digit-5: #b9f6ca;
 }
 
-/* ===== Матричный фон (canvas) ===== */
-#matrix-bg {
+/* ===== Звёздное небо ===== */
+[data-theme="stars"] {
+    --bg: #02020a;
+    --panel-bg: rgba(180, 200, 255, 0.06);
+    --panel-border: rgba(180, 200, 255, 0.25);
+    --text-main: #e8ecff;
+    --text-dim: rgba(232, 236, 255, 0.5);
+    --accent1: #8ab4ff; --accent2: #c8d6ff; --accent3: #ffffff;
+    --title-grad: linear-gradient(135deg, #8ab4ff, #ffffff);
+    --cell-bg: rgba(180, 200, 255, 0.06);
+    --cell-hover: rgba(180, 200, 255, 0.14);
+    --cell-empty: rgba(180, 200, 255, 0.02);
+    --cell-star-bg: rgba(180, 200, 255, 0.02);
+    --cell-star-color: rgba(180, 200, 255, 0.2);
+    --btn-sec-bg: rgba(138, 180, 255, 0.08);
+    --btn-sec-border: rgba(138, 180, 255, 0.3);
+    --btn-sec-hover: rgba(138, 180, 255, 0.16);
+    --status-bg: rgba(2, 2, 10, 0.5);
+    --board-bg: rgba(2, 2, 10, 0.4);
+    --digit-19: #ffd166; --digit-28: #8ab4ff; --digit-37: #c8d6ff;
+    --digit-46: #a0e7e5; --digit-5: #ffffff;
+}
+
+/* ===== Снегопад ===== */
+[data-theme="snow"] {
+    --bg: #0b1a2e;
+    --panel-bg: rgba(200, 230, 255, 0.07);
+    --panel-border: rgba(200, 230, 255, 0.25);
+    --text-main: #eaf4ff;
+    --text-dim: rgba(234, 244, 255, 0.5);
+    --accent1: #7fb8ff; --accent2: #b3d9ff; --accent3: #ffffff;
+    --title-grad: linear-gradient(135deg, #7fb8ff, #ffffff);
+    --cell-bg: rgba(200, 230, 255, 0.07);
+    --cell-hover: rgba(200, 230, 255, 0.15);
+    --cell-empty: rgba(200, 230, 255, 0.02);
+    --cell-star-bg: rgba(200, 230, 255, 0.02);
+    --cell-star-color: rgba(200, 230, 255, 0.2);
+    --btn-sec-bg: rgba(127, 184, 255, 0.08);
+    --btn-sec-border: rgba(127, 184, 255, 0.3);
+    --btn-sec-hover: rgba(127, 184, 255, 0.16);
+    --status-bg: rgba(11, 26, 46, 0.5);
+    --board-bg: rgba(11, 26, 46, 0.4);
+    --digit-19: #ffd6e0; --digit-28: #7fb8ff; --digit-37: #b3d9ff;
+    --digit-46: #c8e6ff; --digit-5: #ffffff;
+}
+
+/* ===== Аврора ===== */
+[data-theme="aurora"] {
+    --bg: #030312;
+    --panel-bg: rgba(100, 255, 218, 0.06);
+    --panel-border: rgba(100, 255, 218, 0.25);
+    --text-main: #e0fff8;
+    --text-dim: rgba(224, 255, 248, 0.5);
+    --accent1: #64ffda; --accent2: #a78bfa; --accent3: #7dd3fc;
+    --title-grad: linear-gradient(135deg, #64ffda, #a78bfa, #7dd3fc);
+    --cell-bg: rgba(100, 255, 218, 0.06);
+    --cell-hover: rgba(100, 255, 218, 0.14);
+    --cell-empty: rgba(100, 255, 218, 0.02);
+    --cell-star-bg: rgba(100, 255, 218, 0.02);
+    --cell-star-color: rgba(100, 255, 218, 0.2);
+    --btn-sec-bg: rgba(167, 139, 250, 0.1);
+    --btn-sec-border: rgba(167, 139, 250, 0.3);
+    --btn-sec-hover: rgba(167, 139, 250, 0.18);
+    --status-bg: rgba(3, 3, 18, 0.5);
+    --board-bg: rgba(3, 3, 18, 0.4);
+    --digit-19: #64ffda; --digit-28: #a78bfa; --digit-37: #7dd3fc;
+    --digit-46: #86efac; --digit-5: #f0abfc;
+}
+
+/* ===== Аквариум ===== */
+[data-theme="aquarium"] {
+    --bg: #003049;
+    --panel-bg: rgba(120, 220, 255, 0.07);
+    --panel-border: rgba(120, 220, 255, 0.25);
+    --text-main: #e0f7ff;
+    --text-dim: rgba(224, 247, 255, 0.5);
+    --accent1: #4cc9f0; --accent2: #80ffdb; --accent3: #f72585;
+    --title-grad: linear-gradient(135deg, #4cc9f0, #80ffdb);
+    --cell-bg: rgba(120, 220, 255, 0.07);
+    --cell-hover: rgba(120, 220, 255, 0.15);
+    --cell-empty: rgba(120, 220, 255, 0.02);
+    --cell-star-bg: rgba(120, 220, 255, 0.02);
+    --cell-star-color: rgba(120, 220, 255, 0.2);
+    --btn-sec-bg: rgba(76, 201, 240, 0.08);
+    --btn-sec-border: rgba(76, 201, 240, 0.3);
+    --btn-sec-hover: rgba(76, 201, 240, 0.16);
+    --status-bg: rgba(0, 48, 73, 0.5);
+    --board-bg: rgba(0, 20, 40, 0.4);
+    --digit-19: #f72585; --digit-28: #4cc9f0; --digit-37: #80ffdb;
+    --digit-46: #48bfe3; --digit-5: #ffd166;
+}
+
+/* ===== Пустыня / закат ===== */
+[data-theme="desert"] {
+    --bg: linear-gradient(180deg, #2b1055 0%, #d94f70 55%, #ff9e5e 100%);
+    --panel-bg: rgba(255, 158, 94, 0.08);
+    --panel-border: rgba(255, 158, 94, 0.3);
+    --text-main: #fff3e6;
+    --text-dim: rgba(255, 243, 230, 0.55);
+    --accent1: #ff9e5e; --accent2: #ff6b6b; --accent3: #ffd166;
+    --title-grad: linear-gradient(135deg, #ffd166, #ff9e5e, #ff6b6b);
+    --cell-bg: rgba(255, 158, 94, 0.09);
+    --cell-hover: rgba(255, 158, 94, 0.17);
+    --cell-empty: rgba(255, 158, 94, 0.03);
+    --cell-star-bg: rgba(255, 158, 94, 0.03);
+    --cell-star-color: rgba(255, 158, 94, 0.25);
+    --btn-sec-bg: rgba(255, 107, 107, 0.1);
+    --btn-sec-border: rgba(255, 107, 107, 0.3);
+    --btn-sec-hover: rgba(255, 107, 107, 0.18);
+    --status-bg: rgba(43, 16, 85, 0.4);
+    --board-bg: rgba(43, 16, 85, 0.35);
+    --digit-19: #ffd166; --digit-28: #ff9e5e; --digit-37: #ff6b6b;
+    --digit-46: #f78fb3; --digit-5: #fff3e6;
+}
+
+/* ===== Подводный мир ===== */
+[data-theme="underwater"] {
+    --bg: linear-gradient(180deg, #014871 0%, #028090 60%, #00a896 100%);
+    --panel-bg: rgba(0, 229, 255, 0.07);
+    --panel-border: rgba(0, 229, 255, 0.25);
+    --text-main: #e0fbfc;
+    --text-dim: rgba(224, 251, 252, 0.5);
+    --accent1: #00e5ff; --accent2: #02c39a; --accent3: #f95738;
+    --title-grad: linear-gradient(135deg, #00e5ff, #02c39a);
+    --cell-bg: rgba(0, 229, 255, 0.07);
+    --cell-hover: rgba(0, 229, 255, 0.15);
+    --cell-empty: rgba(0, 229, 255, 0.02);
+    --cell-star-bg: rgba(0, 229, 255, 0.02);
+    --cell-star-color: rgba(0, 229, 255, 0.2);
+    --btn-sec-bg: rgba(2, 195, 154, 0.1);
+    --btn-sec-border: rgba(2, 195, 154, 0.3);
+    --btn-sec-hover: rgba(2, 195, 154, 0.18);
+    --status-bg: rgba(1, 72, 113, 0.5);
+    --board-bg: rgba(1, 72, 113, 0.4);
+    --digit-19: #f95738; --digit-28: #00e5ff; --digit-37: #02c39a;
+    --digit-46: #80ffdb; --digit-5: #ffd166;
+}
+
+/* ===== Сакура ===== */
+[data-theme="sakura"] {
+    --bg: linear-gradient(160deg, #ffe3ec 0%, #ffd6e0 50%, #fff0f5 100%);
+    --panel-bg: rgba(214, 64, 113, 0.06);
+    --panel-border: rgba(214, 64, 113, 0.2);
+    --text-main: #4a2030;
+    --text-dim: rgba(74, 32, 48, 0.55);
+    --accent1: #d64071; --accent2: #ff8fab; --accent3: #b23a48;
+    --title-grad: linear-gradient(135deg, #d64071, #ff8fab);
+    --cell-bg: rgba(255, 255, 255, 0.5);
+    --cell-hover: rgba(255, 255, 255, 0.85);
+    --cell-empty: rgba(255, 255, 255, 0.2);
+    --cell-star-bg: rgba(214, 64, 113, 0.08);
+    --cell-star-color: rgba(214, 64, 113, 0.3);
+    --btn-sec-bg: rgba(214, 64, 113, 0.1);
+    --btn-sec-border: rgba(214, 64, 113, 0.25);
+    --btn-sec-hover: rgba(214, 64, 113, 0.18);
+    --status-bg: rgba(255, 255, 255, 0.5);
+    --board-bg: rgba(255, 240, 245, 0.4);
+    --digit-19: #d64071; --digit-28: #b23a48; --digit-37: #ff5d8f;
+    --digit-46: #8e4162; --digit-5: #4a2030;
+}
+
+/* ===== Кофейня ===== */
+[data-theme="coffee"] {
+    --bg: linear-gradient(160deg, #2c1a0e 0%, #3e2723 50%, #4e342e 100%);
+    --panel-bg: rgba(222, 184, 135, 0.07);
+    --panel-border: rgba(222, 184, 135, 0.25);
+    --text-main: #f5e6d3;
+    --text-dim: rgba(245, 230, 211, 0.5);
+    --accent1: #deb887; --accent2: #c68b59; --accent3: #f5e6d3;
+    --title-grad: linear-gradient(135deg, #deb887, #f5e6d3);
+    --cell-bg: rgba(222, 184, 135, 0.07);
+    --cell-hover: rgba(222, 184, 135, 0.15);
+    --cell-empty: rgba(222, 184, 135, 0.02);
+    --cell-star-bg: rgba(222, 184, 135, 0.02);
+    --cell-star-color: rgba(222, 184, 135, 0.2);
+    --btn-sec-bg: rgba(198, 139, 89, 0.12);
+    --btn-sec-border: rgba(198, 139, 89, 0.3);
+    --btn-sec-hover: rgba(198, 139, 89, 0.2);
+    --status-bg: rgba(44, 26, 14, 0.5);
+    --board-bg: rgba(44, 26, 14, 0.4);
+    --digit-19: #deb887; --digit-28: #c68b59; --digit-37: #f5e6d3;
+    --digit-46: #e6ccb2; --digit-5: #ffd166;
+}
+
+/* ===== Подвижный фон (canvas) ===== */
+#ambient-bg {
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
     display: none;
 }
-:root[data-theme="matrix"] #matrix-bg { display: block; }
 
 /* Контент поверх канваса */
 .game-layout {
