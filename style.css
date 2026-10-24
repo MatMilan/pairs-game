@@ -133,14 +133,75 @@ body {
     transition: background 0.4s, color 0.4s;
 }
 
-/* ============ МАКЕТ 3 КОЛОНКИ ============ */
+/* ===== Новая сетка: 5 колонок ===== */
 .game-layout {
     display: grid;
-    grid-template-columns: 260px minmax(0, 1fr) 280px;
-    gap: 20px;
-    max-width: 1400px;
-    width: 100%;
+    grid-template-columns: 180px 200px minmax(0, 1fr) 250px 300px;
+    grid-template-areas: "farleft midleft board midright farright";
+    gap: 16px;
     align-items: start;
+    width: 100%;
+    max-width: 1720px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.col-far-left  { grid-area: farleft; }
+.col-mid-left  { grid-area: midleft; }
+.main-column   { grid-area: board; }
+.col-mid-right { grid-area: midright; }
+.col-far-right { grid-area: farright; }
+
+/* Базовые стили боковых колонок */
+.side-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    min-width: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
+}
+
+/* Центральная колонка с полем */
+.main-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+/* ===== Темы: сетка 4 строки × 4 темы ===== */
+.theme-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+.theme-btn {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
+}
+
+/* ===== Адаптив: на узких экранах складываем в одну колонку ===== */
+@media (max-width: 1300px) {
+    .game-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "board"
+            "midleft"
+            "farleft"
+            "midright"
+            "farright";
+    }
+    .side-col {
+        position: static;
+        max-height: none;
+    }
 }
 
 .sidebar {
@@ -152,13 +213,13 @@ body {
     max-height: calc(100vh - 40px);
 }
 
-.sidebar-left .stat-panel,
-.sidebar-left .controls-panel,
-.sidebar-left .status-panel,
-.sidebar-right .theme-panel,
-.sidebar-right .difficulty-panel,
-.sidebar-right .rating-card,
-.sidebar-right .records-card {
+.side-col .stat-panel,
+.side-col .controls-panel,
+.side-col .status-panel,
+.side-col .theme-panel,
+.side-col .difficulty-panel,
+.side-col .rating-card,
+.side-col .records-card {
     background: var(--panel-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
