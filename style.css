@@ -314,11 +314,22 @@ body {
 }
 .theme-btn:hover { transform: scale(1.12); }
 .theme-btn.active { border-color: var(--text-main); box-shadow: 0 0 12px var(--accent1); transform: scale(1.12); }
-.theme-btn[data-theme="cosmos"] { background: linear-gradient(135deg,#0f0c29,#764ba2); }
-.theme-btn[data-theme="light"]  { background: linear-gradient(135deg,#eef1f7,#aab6d3); }
-.theme-btn[data-theme="neon"]   { background: linear-gradient(135deg,#ff0080,#00e5ff); }
-.theme-btn[data-theme="ocean"]  { background: linear-gradient(135deg,#03045e,#48cae4); }
-
+.theme-btn[data-theme="cosmos"]     { background: linear-gradient(135deg, #0f0c29, #764ba2); }
+.theme-btn[data-theme="light"]      { background: linear-gradient(135deg, #eef1f7, #aab6d3); }
+.theme-btn[data-theme="neon"]       { background: linear-gradient(135deg, #ff0080, #00e5ff); }
+.theme-btn[data-theme="ocean"]      { background: linear-gradient(135deg, #03045e, #48cae4); }
+.theme-btn[data-theme="cyber"]      { background: linear-gradient(135deg, #ff2a6d, #05d9e8); }
+.theme-btn[data-theme="forest"]     { background: linear-gradient(135deg, #1b4332, #74c69d); }
+.theme-btn[data-theme="retro"]      { background: linear-gradient(135deg, #ff6ec7, #ffa500); }
+.theme-btn[data-theme="matrix"]     { background: linear-gradient(135deg, #003b00, #00ff41); }
+.theme-btn[data-theme="stars"]      { background: linear-gradient(135deg, #02020a, #8ab4ff); }
+.theme-btn[data-theme="snow"]       { background: linear-gradient(135deg, #16324f, #e8f4ff); }
+.theme-btn[data-theme="aurora"]     { background: linear-gradient(135deg, #64ffda, #a78bfa, #7dd3fc); }
+.theme-btn[data-theme="aquarium"]   { background: linear-gradient(135deg, #003049, #4cc9f0); }
+.theme-btn[data-theme="desert"]     { background: linear-gradient(135deg, #d94f70, #ff9e5e); }
+.theme-btn[data-theme="underwater"] { background: linear-gradient(135deg, #014871, #00a896); }
+.theme-btn[data-theme="sakura"]     { background: linear-gradient(135deg, #ff8fab, #ffd6e0); }
+.theme-btn[data-theme="coffee"]     { background: linear-gradient(135deg, #3e2723, #deb887); }
 /* ============ КНОПКИ ============ */
 .controls-panel { display: flex; flex-direction: column; gap: 10px; }
 .btn {
@@ -1348,19 +1359,24 @@ body {
     outline: none;
 }
 /* Темы 4×4 — переопределение с приоритетом */
+/* Сетка тем 4×4 с центрированием кнопок */
 .theme-panel .theme-options,
 #theme-options {
     display: grid !important;
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 8px !important;
     width: 100%;
+    justify-items: center;
 }
+
+/* Размер самих кнопок */
 .theme-panel .theme-options .theme-btn,
 #theme-options .theme-btn {
-    width: 100% !important;
-    height: auto !important;
+    width: 34px !important;
+    height: 34px !important;
     aspect-ratio: 1 / 1 !important;
     min-width: 0;
+    border-radius: 8px;
 }
 /* «Как играть»: скролл при раскрытии */
 .side-col .help-details[open] {
