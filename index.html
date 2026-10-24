@@ -8,8 +8,8 @@
 </head>
 <body>
     <div class="game-layout">
-        <!-- ============ ЛЕВАЯ КОЛОНКА ============ -->
-        <aside class="sidebar sidebar-left">
+        <!-- КОЛОНКА 1: крайняя левая -->
+        <aside class="side-col col-far-left">
             <div class="stat-panel">
                 <div class="stat-row">
                     <span class="stat-icon">⏱️</span>
@@ -74,10 +74,12 @@
                 <div class="daily-timer-label">До следующего челленджа</div>
                 <div class="daily-timer" id="daily-timer">--:--:--</div>
             </div>
+        </aside>
+        <!-- КОЛОНКА 2: центральная левая -->
+        <aside class="side-col col-mid-left">
             <div class="status-panel">
                 <div class="status-bar" id="status">Нажмите «Старт» для начала</div>
             </div>
-
             <div class="controls-panel">
                 <button id="btn-start" class="btn btn-primary" title="Space">▶️ Старт</button>
                 <button id="btn-pause" class="btn btn-secondary" title="Space">⏸️ Пауза</button>
@@ -85,10 +87,8 @@
                 <button id="btn-undo" class="btn btn-secondary" title="Z">↩️ Отмена</button>
                 <button id="btn-hint" class="btn btn-secondary" title="H">💡 Подсказка</button>
             </div>
-
         </aside>
-
-        <!-- ============ ЦЕНТР ============ -->
+        <!-- КОЛОНКА 3: центр — игровое поле -->
         <main class="main-column">
             <h1 class="game-title">✨ Пары чисел ✨</h1>
             <div class="board-wrapper" id="board-wrapper">
@@ -98,9 +98,8 @@
                 </div>
             </div>
         </main>
-
-        <!-- ============ ПРАВАЯ КОЛОНКА ============ -->
-        <aside class="sidebar sidebar-right">
+            <!-- КОЛОНКА 4: центральная правая -->
+        <aside class="side-col col-mid-right">
             <div class="theme-panel">
                 <span class="stat-label panel-label">Тема</span>
                 <div class="theme-options" id="theme-options">
@@ -122,7 +121,6 @@
                     <button class="theme-btn" data-theme="coffee" title="Кофейня"></button>
                 </div>
             </div>
-
             <details class="help-details">
                 <summary class="help-summary">ℹ️ Как играть</summary>
                 <div class="help-body">
@@ -137,7 +135,6 @@
                     </button>                    
                 </div>
             </details>
-
             <div class="difficulty-panel">
                 <span class="stat-label panel-label">Сложность</span>
                 <select id="difficulty-select" class="difficulty-select">
@@ -148,12 +145,27 @@
                     <option value="daily">Daily Challenge</option>
                 </select>
             </div>
+            <div class="records-card">
+                <h2 class="records-title" id="records-title">🏆 Рекорды</h2>
+                <div class="records-scroll">
+                    <div class="records-block">
+                        <h3 class="records-heading">⏱️ Лучшее время</h3>
+                        <ol class="records-list" id="records-time"></ol>
+                    </div>
+                    <div class="records-block">
+                        <h3 class="records-heading">🎯 Убрано пар</h3>
+                        <ol class="records-list" id="records-pairs"></ol>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- КОЛОНКА 5: крайняя правая -->
+        <aside class="side-col col-far-right">
             <div class="rating-card">
                 <div class="rating-head">
                     <h2 class="rating-title">🌍 Онлайн-рейтинг</h2>
                     <button id="btn-rating-refresh" class="rating-refresh" title="Обновить">🔄</button>
                 </div>
-
                 <div class="rating-tabs" id="rating-tabs">
                     <button data-mode="classic" class="rating-tab active">Classic</button>
                     <button data-mode="level1" class="rating-tab">Easy</button>
@@ -161,7 +173,6 @@
                     <button data-mode="level3" class="rating-tab">Hard</button>
                     <button data-mode="daily" class="rating-tab">Daily</button>
                 </div>
-
                 <div class="rating-kinds" id="rating-kinds">
                     <button data-kind="time" class="rating-kind active">⏱️ Время</button>
                     <button data-kind="pairs" class="rating-kind">🎯 Пары</button>
@@ -177,9 +188,7 @@
                     <select id="daily-archive-select" class="daily-archive-select"></select>
                 </div>
                 <ol class="records-list rating-list" id="rating-list"></ol>
-
                 <div class="rating-status" id="rating-status"></div>
-
                 <div class="rating-player">
                     <button id="btn-google-auth" class="btn btn-google">🔐 Войти через Google</button>
                     <div id="auth-status" class="auth-status"></div>
@@ -190,23 +199,9 @@
                         📤 Отправить результат
                     </button>
                 </div>
-
                 <p class="rating-hint">
                     Имя запоминается. После победы результат отправляется автоматически.
                 </p>
-            </div>
-            <div class="records-card">
-                <h2 class="records-title" id="records-title">🏆 Рекорды</h2>
-                <div class="records-scroll">
-                    <div class="records-block">
-                        <h3 class="records-heading">⏱️ Лучшее время</h3>
-                        <ol class="records-list" id="records-time"></ol>
-                    </div>
-                    <div class="records-block">
-                        <h3 class="records-heading">🎯 Убрано пар</h3>
-                        <ol class="records-list" id="records-pairs"></ol>
-                    </div>
-                </div>
             </div>
         </aside>
     </div>
