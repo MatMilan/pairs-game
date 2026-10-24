@@ -1124,9 +1124,6 @@ function queueOnlineResult(seconds) {
         sent: false,
     };
 
-    const sendBtn = document.getElementById('btn-rating-send');
-    if (sendBtn) sendBtn.disabled = false;
-
     if (window.Rating && window.Rating.enabled) {
         sendOnlineResult();
     }
@@ -1143,8 +1140,6 @@ async function sendOnlineResult() {
 
     const status = (t, err) => window.Rating.setStatus(t, err);
     const run = pendingRun;
-    const btn = document.getElementById('btn-rating-send');
-    if (btn) btn.disabled = true;
     status('Проверка и отправка результата…');
 
     try {
@@ -1639,9 +1634,6 @@ function initDifficulty() {
     difficultySelect.value = saved;
 }
 
-// ===== Кнопка отправки в онлайн-рейтинг =====
-const ratingSendBtn = document.getElementById('btn-rating-send');
-if (ratingSendBtn) ratingSendBtn.addEventListener('click', sendOnlineResult);
 // ===== Плавная анимация сдвига: копии вылетают из оригиналов =====
 let flipCapture = null;
 
