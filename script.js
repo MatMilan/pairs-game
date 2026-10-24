@@ -1038,24 +1038,31 @@ function giveHint() {
         updateStatus('💡 Подсказки закончились!');
         return;
     }
+
+    const tds = Array.from(table.querySelectorAll('td'));
+    tds.forEach(td => td.classList.remove('hint'));
+
     for (let r1 = 0; r1 < ROWS; r1++) {
         for (let c1 = 0; c1 < COLS; c1++) {
             const v1 = board[r1][c1];
             if (typeof v1 !== 'number') continue;
+
             for (let r2 = r1; r2 < ROWS; r2++) {
-                for (let c2 = c1; c2 < COLS; c2++) {
-                    if (r1 === r2 && c1 === c2) continue;
+                const startC2 = (r2 === r1) ? c1 + 1 : 0;
+
+                for (let c2 = startC2; c2 < COLS; c2++) {
                     const v2 = board[r2][c2];
                     if (typeof v2 !== 'number') continue;
+
                     const a = { r: r1, c: c1 };
                     const b = { r: r2, c: c2 };
+
                     if (isPair(a, b)) {
-                        const tds = Array.from(table.querySelectorAll('td'));
-                        tds.forEach(td => td.classList.remove('hint'));
                         const idx1 = r1 * COLS + c1;
                         const idx2 = r2 * COLS + c2;
                         if (idx1 < tds.length) tds[idx1].classList.add('hint');
                         if (idx2 < tds.length) tds[idx2].classList.add('hint');
+
                         hintsRemaining--;
                         renderHintsLamps();
                         playSound('hint');
@@ -1066,8 +1073,9 @@ function giveHint() {
             }
         }
     }
+
     playSound('error');
-    updateStatus('Пар нет — попробуйте сдвиг');
+    updateStatus('Пар нет — попробуйте «Сдвиг»');
 }
 
 function updateStatus(msg) {
