@@ -136,7 +136,7 @@ body {
 /* ===== Новая сетка: 5 колонок ===== */
 .game-layout {
     display: grid;
-    grid-template-columns: 180px 200px minmax(0, 1fr) 250px 300px;
+    grid-template-columns: 215px 200px minmax(0, 1fr) 250px 300px;
     grid-template-areas: "farleft midleft board midright farright";
     gap: 16px;
     align-items: start;
@@ -1346,4 +1346,46 @@ body {
     font-size: 0.8rem;
     cursor: pointer;
     outline: none;
+}
+/* Темы 4×4 — переопределение с приоритетом */
+.theme-panel .theme-options,
+#theme-options {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+    width: 100%;
+}
+.theme-panel .theme-options .theme-btn,
+#theme-options .theme-btn {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    min-width: 0;
+}
+/* «Как играть»: скролл при раскрытии */
+.side-col .help-details[open] {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
+}
+.side-col .help-details[open]::-webkit-scrollbar {
+    width: 8px;
+}
+.side-col .help-details[open]::-webkit-scrollbar-thumb {
+    background: var(--scrollbar);
+    border-radius: 4px;
+}
+/* Единый стиль выпадающих списков */
+select,
+select option {
+    background-color: #1b1b2f;
+    color: #e8e8f0;
+}
+select {
+    border: 1px solid var(--panel-border);
+}
+select:focus {
+    outline: none;
+    border-color: var(--accent1);
 }
