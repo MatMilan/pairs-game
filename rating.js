@@ -380,19 +380,12 @@
     }
 
     function init() {
-       // 1. Поле ввода имени
-        const input = $('player-name');
-        if (input) {
-            input.value = getPlayer();
-            input.addEventListener('input', () => setPlayer(input.value.trim()));
-        }
-
-        // 2. Основные вкладки режимов (Classic, Easy, Medium, Hard, Daily)
+        // 1. Основные вкладки режимов (Classic, Easy, Medium, Hard, Daily)
         document.querySelectorAll('#rating-tabs button').forEach(b => {
             b.addEventListener('click', () => setMode(b.dataset.mode));
         });
 
-        // 3. Вкладки типа результата (Время / Пары)
+        // 2. Вкладки типа результата (Время / Пары)
         document.querySelectorAll('#rating-kinds button').forEach(b => {
             b.addEventListener('click', () => {
                 kind = b.dataset.kind;
@@ -401,11 +394,11 @@
             });
         });
 
-        // 4. Кнопка обновления рейтинга
+        // 3. Кнопка обновления рейтинга
         const btn = $('btn-rating-refresh');
         if (btn) btn.addEventListener('click', () => refresh());
 
-        // Подтабы для Daily (Сегодня / Вчера / За всё время / Архив)
+        // 4.Подтабы для Daily (Сегодня / Вчера / За всё время / Архив)
         document.querySelectorAll('.daily-subtab').forEach(b => {
             b.addEventListener('click', () => {
                 dailyPeriod = b.dataset.period;
@@ -423,7 +416,7 @@
             });
         });
 
-        // Выбор конкретной даты в архиве
+        // 5.Выбор конкретной даты в архиве
         const archiveSelect = $('daily-archive-select');
         if (archiveSelect) {
             archiveSelect.addEventListener('change', (e) => {
@@ -444,14 +437,14 @@
             subtabs.style.display = (mode === 'daily') ? 'flex' : 'none';
         }
 
-        // Селект архива виден только если режим Daily И выбран подтаб «Архив»
+        // 7.Селект архива виден только если режим Daily И выбран подтаб «Архив»
         const picker = $('daily-archive-picker');
         if (picker) {
             picker.style.display = (mode === 'daily' && dailyPeriod === 'archive') ? 'block' : 'none';
         }
     }
         
-        // 7. Проверка авторизации
+        // 8. Проверка авторизации
         checkAuth();
     }
 
