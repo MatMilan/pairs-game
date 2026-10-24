@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Пары чисел</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -90,7 +91,11 @@
         </aside>
         <!-- КОЛОНКА 3: центр — игровое поле -->
         <main class="main-column">
-            <h1 class="game-title">✨ Пары чисел ✨</h1>
+            <h1 class="game-title">
+                <span class="title-icon">✨</span>
+                Пары чисел
+                <span class="title-icon">✨</span>
+            </h1>
             <div class="board-wrapper" id="board-wrapper">
                 <table id="game-board"></table>
                 <div class="pause-overlay" id="pause-overlay">
@@ -192,12 +197,10 @@
                 <div class="rating-player">
                     <button id="btn-google-auth" class="btn btn-google">🔐 Войти через Google</button>
                     <div id="auth-status" class="auth-status"></div>
-                    <label class="stat-label" for="player-name">Ваше имя</label>
-                    <input id="player-name" class="rating-input" type="text"
-                           maxlength="24" placeholder="Как вас записать?" autocomplete="nickname">
-                    <button id="btn-rating-send" class="btn btn-primary rating-send" disabled>
-                        📤 Отправить результат
-                    </button>
+                    <p class="rating-hint">
+                        Результат отправляется автоматически после победы.
+                        Имя берётся из вашего Google-аккаунта.
+                    </p>
                 </div>
                 <p class="rating-hint">
                     Имя запоминается. После победы результат отправляется автоматически.
