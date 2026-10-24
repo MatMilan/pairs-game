@@ -1083,10 +1083,18 @@ function applyTheme(name) {
         b.classList.toggle('active', b.dataset.theme === name);
     });
 
-    // Управление анимированным фоном «Матрицы»
-    if (typeof window.startMatrix === 'function' && typeof window.stopMatrix === 'function') {
-        if (name === 'matrix') window.startMatrix();
-        else window.stopMatrix();
+    // Управление анимированными фонами
+    const THEME_EFFECTS = {
+        matrix: 'matrix',
+        stars: 'stars',
+        snow: 'snow',
+        aurora: 'aurora',
+        aquarium: 'bubbles'
+    };
+    if (typeof window.startAmbient === 'function' && typeof window.stopAmbient === 'function') {
+        const effect = THEME_EFFECTS[name];
+        if (effect) window.startAmbient(effect);
+        else window.stopAmbient();
     }
 }
 function initThemes() {
